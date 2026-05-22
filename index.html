@@ -10,6 +10,8 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1a3c6e">
 <style>
@@ -611,18 +613,38 @@ table.results-table td { font-size: 13px; vertical-align: middle; }
             <tbody id="student-pins-table"></tbody></table>
           </div>
           <div class="card-box">
-            <h6 class="fw-bold mb-3" style="color:var(--primary)"><i class="fas fa-cloud me-2" style="color:var(--accent)"></i>Cloud Hosting Guide</h6>
-            <div style="font-size:13px">
-              <p class="mb-2">To access from <strong>school PC or phone</strong>, host this file for free on GitHub Pages:</p>
-              <ol style="padding-left:20px;line-height:2">
-                <li>Create a free account at <strong>github.com</strong></li>
-                <li>Create a new repository (e.g. <code>classxii-tracker</code>)</li>
-                <li>Upload <code>index.html</code>, <code>manifest.json</code>, <code>sw.js</code></li>
-                <li>Go to Settings → Pages → Source: main branch</li>
-                <li>Your URL: <code>https://yourname.github.io/classxii-tracker</code></li>
-              </ol>
-              <div class="alert-needs mt-2" style="font-size:12px"><i class="fas fa-info-circle me-1"></i>Data is saved per browser. Use the Excel Export/Import to sync data between devices.</div>
+            <h6 class="fw-bold mb-3" style="color:var(--primary)"><i class="fas fa-fire me-2" style="color:#f59e0b"></i>Cloud Sync – Firebase</h6>
+            <!-- Status bar -->
+            <div id="fb-status-bar" style="padding:8px 12px;border-radius:8px;font-size:13px;margin-bottom:14px;background:#fee2e2;color:#991b1b">
+              <i class="fas fa-circle me-1"></i><span id="fb-status-text">🔴 Not Connected — data saves to this browser only</span>
             </div>
+            <!-- Setup guide -->
+            <details style="margin-bottom:12px">
+              <summary style="font-size:12px;font-weight:600;color:var(--primary);cursor:pointer">📋 How to get Firebase config (one-time setup, ~5 min)</summary>
+              <ol style="font-size:12px;color:#475569;padding-left:18px;margin-top:8px;line-height:2">
+                <li>Go to <a href="https://console.firebase.google.com" target="_blank" style="color:var(--primary)">console.firebase.google.com</a></li>
+                <li>Click <strong>Add project</strong> → give it a name → Continue</li>
+                <li>Disable Google Analytics → <strong>Create project</strong></li>
+                <li>Click <strong>Build → Realtime Database → Create database</strong></li>
+                <li>Choose any location → select <strong>Start in test mode</strong> → Enable</li>
+                <li>Go back to <strong>Project Overview</strong> → click the <strong>&lt;/&gt;</strong> (Web) icon</li>
+                <li>Register app (any name) → copy the 4 config values below</li>
+              </ol>
+            </details>
+            <!-- Config fields -->
+            <div class="row g-2 mb-3">
+              <div class="col-12"><input type="text" id="fb-apikey" class="form-control form-control-sm" placeholder="apiKey — e.g. AIzaSyB..."></div>
+              <div class="col-12"><input type="text" id="fb-authdomain" class="form-control form-control-sm" placeholder="authDomain — e.g. myapp.firebaseapp.com"></div>
+              <div class="col-12"><input type="text" id="fb-dburl" class="form-control form-control-sm" placeholder="databaseURL — e.g. https://myapp-default-rtdb.firebaseio.com"></div>
+              <div class="col-12"><input type="text" id="fb-projectid" class="form-control form-control-sm" placeholder="projectId — e.g. myapp-12345"></div>
+            </div>
+            <!-- Buttons -->
+            <div class="d-flex gap-2 flex-wrap">
+              <button class="btn btn-sm btn-warning fw-bold" onclick="connectFirebase(false)"><i class="fas fa-plug me-1"></i>Connect to Firebase</button>
+              <button class="btn btn-sm btn-success fw-bold" id="fb-migrate-btn" style="display:none" onclick="migrateToFirebase()"><i class="fas fa-cloud-upload-alt me-1"></i>Upload Local Data to Cloud</button>
+              <button class="btn btn-sm btn-outline-danger" id="fb-disconnect-btn" style="display:none" onclick="disconnectFirebase()"><i class="fas fa-unlink me-1"></i>Disconnect</button>
+            </div>
+            <div id="fb-msg" class="mt-2" style="font-size:12px"></div>
           </div>
         </div>
       </div>
@@ -1998,12 +2020,153 @@ function changePassword() {
 // We call localStorage.setItem directly here to avoid any recursion.
 function ss(key,val) {
   try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) { console.warn('Save error:',e); }
+  fbWrite(key, val); // also push to Firebase if connected
   const dot=document.getElementById('autosave-dot');
   const txt=document.getElementById('autosave-txt');
   if(!dot||!txt) return;
   dot.className='saving'; txt.textContent='Saving…';
   clearTimeout(ss._t);
   ss._t=setTimeout(()=>{ dot.className=''; txt.textContent='Saved'; },800);
+}
+
+// ===================== FIREBASE SYNC =====================
+const FB_KEYS = ['exams','tests','assignments','attendance','diary','syllabus','covered_chapters','subjects','teacher_pw'];
+window._fbDb = null;
+window._fbSyncEnabled = false;
+window._fbListenerOn = false;
+
+function fbWrite(key, val) {
+  if(!window._fbDb || !window._fbSyncEnabled) return;
+  const k = key.replace('xii_','');
+  if(!FB_KEYS.includes(k)) return;
+  window._fbDb.ref('classxii/'+k).set(val).catch(e=>console.warn('Firebase write error:',e));
+}
+
+function connectFirebase(silent) {
+  const apiKey    = (document.getElementById('fb-apikey')||{value:''}).value.trim();
+  const authDomain= (document.getElementById('fb-authdomain')||{value:''}).value.trim();
+  const databaseURL=(document.getElementById('fb-dburl')||{value:''}).value.trim();
+  const projectId = (document.getElementById('fb-projectid')||{value:''}).value.trim();
+
+  if(!silent && (!apiKey||!databaseURL||!projectId)) {
+    document.getElementById('fb-msg').innerHTML='<span style="color:#ef4444">⚠️ Please fill in all 4 config fields.</span>';
+    return;
+  }
+  const config = {apiKey,authDomain,databaseURL,projectId};
+  // delete existing app if any
+  try {
+    if(typeof firebase!=='undefined' && firebase.apps.length>0) {
+      firebase.apps[0].delete().then(()=>_initFb(config,silent)).catch(()=>_initFb(config,silent));
+      return;
+    }
+  } catch(e){}
+  _initFb(config, silent);
+}
+
+function _initFb(config, silent) {
+  try {
+    firebase.initializeApp(config);
+    window._fbDb = firebase.database();
+    window._fbSyncEnabled = true;
+    localStorage.setItem('xii_fb_config', JSON.stringify(config));
+
+    // Load latest data from cloud first
+    window._fbDb.ref('classxii').once('value').then(snap=>{
+      _applyFbData(snap.val()||{});
+      setFbStatus(true);
+      if(!silent) {
+        const m=document.getElementById('fb-msg');
+        if(m) m.innerHTML='<span style="color:#10b981">✅ Connected! Latest data loaded from cloud.</span>';
+      }
+      refreshCurrentPage();
+
+      // Real-time listener — updates this device when another device saves
+      if(!window._fbListenerOn) {
+        window._fbListenerOn = true;
+        window._fbDb.ref('classxii').on('value', snap=>{
+          if(!window._fbSyncEnabled) return;
+          _applyFbData(snap.val()||{});
+          refreshCurrentPage();
+        });
+      }
+    }).catch(e=>{
+      setFbStatus(false,'Connection failed: '+e.message);
+      if(!silent){ const m=document.getElementById('fb-msg'); if(m) m.innerHTML='<span style="color:#ef4444">❌ '+e.message+'</span>'; }
+    });
+  } catch(e) {
+    setFbStatus(false,'Init error: '+e.message);
+    if(!silent){ const m=document.getElementById('fb-msg'); if(m) m.innerHTML='<span style="color:#ef4444">❌ '+e.message+'</span>'; }
+  }
+}
+
+function _applyFbData(data) {
+  FB_KEYS.forEach(k=>{
+    if(data[k]!==undefined && data[k]!==null) {
+      try { localStorage.setItem('xii_'+k, JSON.stringify(data[k])); } catch(e){}
+    }
+  });
+}
+
+function disconnectFirebase() {
+  try { if(window._fbDb) window._fbDb.goOffline(); } catch(e){}
+  window._fbDb=null; window._fbSyncEnabled=false; window._fbListenerOn=false;
+  localStorage.removeItem('xii_fb_config');
+  setFbStatus(false,'Disconnected.');
+  const m=document.getElementById('fb-msg'); if(m) m.innerHTML='<span style="color:#64748b">Disconnected from Firebase. Data still saved locally.</span>';
+}
+
+function setFbStatus(connected, msg) {
+  const bar=document.getElementById('fb-status-bar');
+  const txt=document.getElementById('fb-status-text');
+  const mBtn=document.getElementById('fb-migrate-btn');
+  const dBtn=document.getElementById('fb-disconnect-btn');
+  if(!bar||!txt) return;
+  if(connected) {
+    bar.style.background='#d1fae5'; bar.style.color='#065f46';
+    txt.textContent='🟢 Connected — data syncs across all devices automatically';
+    if(mBtn) mBtn.style.display='';
+    if(dBtn) dBtn.style.display='';
+  } else {
+    bar.style.background='#fee2e2'; bar.style.color='#991b1b';
+    txt.textContent='🔴 '+(msg||'Not Connected — data saves to this browser only');
+    if(mBtn) mBtn.style.display='none';
+    if(dBtn) dBtn.style.display='none';
+  }
+}
+
+function migrateToFirebase() {
+  if(!window._fbDb){ alert('Connect to Firebase first.'); return; }
+  if(!confirm('This will upload ALL data from this device (exams, marks, attendance, diary, tests…) to Firebase cloud.\n\nAfter this, every device will see the same data.\n\nContinue?')) return;
+  const data={};
+  FB_KEYS.forEach(k=>{ const r=localStorage.getItem('xii_'+k); if(r){ try{data[k]=JSON.parse(r);}catch(e){} } });
+  window._fbSyncEnabled=false;
+  window._fbDb.ref('classxii').set(data).then(()=>{
+    window._fbSyncEnabled=true;
+    const m=document.getElementById('fb-msg');
+    if(m) m.innerHTML='<span style="color:#10b981">✅ All data uploaded to cloud! Open the app on any device and connect to the same Firebase project — everything will appear.</span>';
+    alert('✅ Migration successful!\n\nYour data is now in the cloud.\n\nNext steps:\n1. Open the app on your laptop\n2. Go to Settings → Firebase\n3. Enter the same config → Connect\n4. All data will appear automatically!');
+  }).catch(e=>{
+    window._fbSyncEnabled=true;
+    alert('Upload failed: '+e.message);
+  });
+}
+
+function refreshCurrentPage() {
+  const active=document.querySelector('.page.active');
+  if(!active) return;
+  const id=active.id.replace('page-','');
+  try {
+    if(id==='dashboard') renderDashboard();
+    else if(id==='exams') renderExams();
+    else if(id==='tests') renderTests();
+    else if(id==='assignments') renderAssignments();
+    else if(id==='attendance') renderAttendance();
+    else if(id==='diary') renderDiary();
+    else if(id==='syllabus'){ renderPolsciSyllabusOverview(); renderSyllabus(); }
+    else if(id==='analytics') renderAnalytics();
+    else if(id==='reports') renderReportCardList();
+    else if(id==='settings') renderSettingsPage();
+  } catch(e){ console.warn('refreshCurrentPage error:',e); }
 }
 
 // ===================== ATTENDANCE =====================
@@ -3122,6 +3285,18 @@ function renderSettingsPage(){
   const students=getStudents();
   document.getElementById('student-pins-table').innerHTML=students.map(s=>`
     <tr><td>${s.name}</td><td>${s.admNo}</td><td><code>${s.admNo.slice(-4)}</code></td></tr>`).join('');
+  // Re-fill Firebase config fields if saved
+  try {
+    const cfg=JSON.parse(localStorage.getItem('xii_fb_config')||'null');
+    if(cfg){
+      const f=document.getElementById('fb-apikey'); if(f) f.value=cfg.apiKey||'';
+      const f2=document.getElementById('fb-authdomain'); if(f2) f2.value=cfg.authDomain||'';
+      const f3=document.getElementById('fb-dburl'); if(f3) f3.value=cfg.databaseURL||'';
+      const f4=document.getElementById('fb-projectid'); if(f4) f4.value=cfg.projectId||'';
+    }
+  } catch(e){}
+  // Update Firebase status UI
+  setFbStatus(window._fbSyncEnabled);
 }
 
 // PAGE TITLES
@@ -3140,6 +3315,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // Populate student login select
   const sel=document.getElementById('student-login-select');
   getStudents().forEach(s=>{ const opt=document.createElement('option'); opt.value=s.id; opt.textContent=s.name; sel.appendChild(opt); });
+
+  // Auto-reconnect Firebase if previously configured
+  try {
+    const fbCfg=JSON.parse(localStorage.getItem('xii_fb_config')||'null');
+    if(fbCfg && fbCfg.apiKey && fbCfg.databaseURL) {
+      connectFirebase(true); // silent = no alert, just reconnect in background
+    }
+  } catch(e){}
 
   // Check existing session
   const sess=getSession();
