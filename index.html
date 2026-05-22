@@ -1,0 +1,3370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Class XII Tracker – Salwan Public School</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1a3c6e">
+<style>
+:root {
+  --primary: #1a3c6e;
+  --accent: #e8a020;
+  --sidebar-w: 240px;
+}
+body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; }
+#sidebar {
+  width: var(--sidebar-w); min-height: 100vh; background: var(--primary);
+  position: fixed; top: 0; left: 0; z-index: 1000;
+  display: flex; flex-direction: column;
+}
+#sidebar .logo {
+  background: rgba(0,0,0,0.2); padding: 18px 16px; text-align: center; color: #fff;
+}
+#sidebar .logo h6 { font-size: 13px; margin: 0; opacity: 0.85; }
+#sidebar .logo p { font-size: 11px; margin: 0; opacity: 0.6; }
+#sidebar nav a {
+  display: flex; align-items: center; gap: 10px; padding: 12px 20px;
+  color: rgba(255,255,255,0.75); text-decoration: none; font-size: 14px;
+  transition: all 0.2s; border-left: 3px solid transparent;
+}
+#sidebar nav a:hover, #sidebar nav a.active {
+  color: #fff; background: rgba(255,255,255,0.1); border-left-color: var(--accent);
+}
+#sidebar nav a i { width: 18px; text-align: center; }
+#main { margin-left: var(--sidebar-w); min-height: 100vh; }
+#topbar {
+  background: #fff; padding: 14px 28px; border-bottom: 1px solid #e2e8f0;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+}
+#topbar h5 { margin: 0; color: var(--primary); font-weight: 700; }
+.content { padding: 28px; }
+.stat-card {
+  background: #fff; border-radius: 12px; padding: 20px 24px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06); border-left: 4px solid transparent;
+}
+.stat-card.blue { border-left-color: #3b82f6; }
+.stat-card.green { border-left-color: #10b981; }
+.stat-card.orange { border-left-color: #f59e0b; }
+.stat-card.red { border-left-color: #ef4444; }
+.stat-card .val { font-size: 2rem; font-weight: 700; color: var(--primary); }
+.stat-card .lbl { font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+.card-box {
+  background: #fff; border-radius: 12px; padding: 24px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.page { display: none; }
+.page.active { display: block; }
+.grade-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: 600;
+}
+.grade-A1,.grade-A2 { background: #d1fae5; color: #065f46; }
+.grade-B1,.grade-B2 { background: #dbeafe; color: #1e40af; }
+.grade-C1,.grade-C2 { background: #fef3c7; color: #92400e; }
+.grade-D { background: #fee2e2; color: #991b1b; }
+.grade-E { background: #fce7f3; color: #9d174d; }
+.student-card {
+  background: #fff; border-radius: 10px; padding: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06); cursor: pointer; transition: all 0.2s;
+  border: 2px solid transparent;
+}
+.student-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+.student-card .avatar {
+  width: 44px; height: 44px; border-radius: 50%; background: var(--primary);
+  color: #fff; display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 16px; flex-shrink: 0;
+}
+.progress-bar-custom { height: 6px; border-radius: 3px; background: #e2e8f0; }
+.progress-fill { height: 100%; border-radius: 3px; background: var(--primary); }
+table.results-table th { background: var(--primary); color: #fff; font-size: 13px; }
+table.results-table td { font-size: 13px; vertical-align: middle; }
+.subject-pill {
+  display: inline-block; padding: 3px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 600; background: #e0e7ff; color: #3730a3;
+}
+.nav-tabs .nav-link { color: #64748b; font-size: 13px; }
+.nav-tabs .nav-link.active { color: var(--primary); font-weight: 600; }
+.modal-header { background: var(--primary); color: #fff; }
+.modal-header .btn-close { filter: invert(1); }
+.btn-primary-custom { background: var(--primary); border: none; color: #fff; }
+.btn-primary-custom:hover { background: #14305a; color: #fff; }
+.btn-accent { background: var(--accent); border: none; color: #fff; }
+.btn-accent:hover { background: #c87d10; color: #fff; }
+.alert-needs { background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 10px 14px; }
+.chart-container { position: relative; height: 280px; }
+.topic-tag {
+  display: inline-block; background: #f1f5f9; border: 1px solid #cbd5e1;
+  border-radius: 4px; padding: 2px 8px; font-size: 11px; margin: 2px; cursor: pointer;
+}
+.topic-tag.covered { background: #d1fae5; border-color: #6ee7b7; }
+.syllabus-item { border-left: 3px solid var(--accent); padding: 8px 14px; margin: 6px 0; background: #fffbeb; border-radius: 0 6px 6px 0; }
+.pdf-drop-zone {
+  border: 2px dashed #cbd5e1; border-radius: 10px; padding: 22px; text-align: center;
+  cursor: pointer; transition: all 0.2s; background: #f8fafc;
+}
+.pdf-drop-zone:hover, .pdf-drop-zone.drag-over { border-color: var(--primary); background: #eff6ff; }
+.pdf-drop-zone i { font-size: 2rem; color: #94a3b8; }
+.pdf-drop-zone.has-file { border-color: #10b981; background: #f0fdf4; }
+.pdf-drop-zone.has-file i { color: #10b981; }
+.pdf-card {
+  display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; margin: 4px 0;
+}
+.pdf-card .pdf-icon { font-size: 1.6rem; color: #ef4444; flex-shrink: 0; }
+.pdf-card .pdf-name { font-size: 13px; font-weight: 600; color: #1e293b; }
+.pdf-card .pdf-size { font-size: 11px; color: #94a3b8; }
+.pdf-viewer-iframe { width: 100%; height: 75vh; border: none; border-radius: 8px; }
+
+/* ── LOGIN ── */
+#login-overlay {
+  position:fixed;inset:0;background:linear-gradient(135deg,#1a3c6e 0%,#14305a 100%);
+  z-index:9999;display:flex;align-items:center;justify-content:center;
+}
+.login-box {
+  background:#fff;border-radius:16px;padding:36px 40px;width:100%;max-width:420px;
+  box-shadow:0 20px 60px rgba(0,0,0,0.3);text-align:center;
+}
+.login-box .school-name { font-size:13px;color:#64748b;margin-top:4px; }
+.login-tab { display:inline-flex;background:#f1f5f9;border-radius:8px;padding:3px;margin:16px 0; }
+.login-tab button {
+  padding:7px 22px;border:none;border-radius:6px;font-size:13px;font-weight:600;
+  cursor:pointer;background:transparent;color:#64748b;transition:all 0.2s;
+}
+.login-tab button.active { background:var(--primary);color:#fff; }
+
+/* ── AUTO-SAVE ── */
+#autosave-dot {
+  width:8px;height:8px;border-radius:50%;background:#10b981;
+  display:inline-block;margin-right:4px;transition:all 0.3s;
+}
+#autosave-dot.saving { background:#f59e0b;animation:pulse 0.8s infinite; }
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+
+/* ── ATTENDANCE ── */
+.att-cell {
+  width:34px;height:34px;border-radius:6px;display:inline-flex;align-items:center;
+  justify-content:center;font-size:12px;font-weight:700;cursor:pointer;
+  border:2px solid transparent;transition:all 0.15s;
+}
+.att-P  { background:#d1fae5;color:#065f46; }
+.att-A  { background:#fee2e2;color:#991b1b; }
+.att-L  { background:#fef3c7;color:#92400e; }
+.att-H  { background:#f1f5f9;color:#64748b; }
+.att-cell:hover { transform:scale(1.15);border-color:var(--primary); }
+.att-summary-bar { height:8px;border-radius:4px;overflow:hidden;background:#e2e8f0;display:flex; }
+.att-summary-bar .seg-P { background:#10b981; }
+.att-summary-bar .seg-A { background:#ef4444; }
+.att-summary-bar .seg-L { background:#f59e0b; }
+
+/* ── DIARY ── */
+.diary-entry {
+  border-left:4px solid var(--accent);padding:12px 16px;margin:8px 0;
+  background:#fff;border-radius:0 8px 8px 0;box-shadow:0 1px 3px rgba(0,0,0,0.05);
+}
+.diary-period-badge {
+  display:inline-block;padding:2px 10px;border-radius:12px;font-size:11px;font-weight:600;
+  background:#e0e7ff;color:#3730a3;margin-right:6px;
+}
+
+/* ── REPORT CARD (print) ── */
+@media print {
+  #sidebar,#topbar,.no-print { display:none !important; }
+  #main { margin-left:0 !important; }
+  .print-only { display:block !important; }
+  #report-card-area { padding:0 !important; }
+  .card-box { box-shadow:none !important; border:1px solid #e2e8f0 !important; }
+  body { background:#fff !important; }
+}
+.print-only { display:none; }
+.rc-header {
+  background:var(--primary);color:#fff;padding:20px 24px;border-radius:10px 10px 0 0;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.rc-subject-row { display:flex;align-items:center;padding:8px 0;border-bottom:1px solid #e2e8f0; }
+.rc-subject-row:last-child { border-bottom:none; }
+
+/* ── MOBILE SIDEBAR ── */
+#sidebar-toggle {
+  display:none;position:fixed;bottom:20px;right:20px;z-index:1100;
+  width:50px;height:50px;border-radius:50%;background:var(--primary);
+  color:#fff;border:none;font-size:20px;box-shadow:0 4px 12px rgba(0,0,0,0.3);
+}
+@media(max-width:768px){
+  #sidebar { transform:translateX(-100%);transition:transform 0.3s; }
+  #sidebar.open { transform:translateX(0); }
+  #main { margin-left:0 !important; }
+  #sidebar-toggle { display:flex;align-items:center;justify-content:center; }
+  .content { padding:16px; }
+}
+
+/* ── AI ANALYSIS ── */
+.ai-card {
+  border-radius:10px;padding:16px;margin-bottom:10px;
+  border-left:4px solid transparent;
+}
+.ai-card.danger  { background:#fff1f2;border-left-color:#ef4444; }
+.ai-card.warning { background:#fffbeb;border-left-color:#f59e0b; }
+.ai-card.info    { background:#eff6ff;border-left-color:#3b82f6; }
+.ai-card.success { background:#f0fdf4;border-left-color:#10b981; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN OVERLAY -->
+<div id="login-overlay">
+  <div class="login-box">
+    <i class="fas fa-school fa-3x mb-2" style="color:var(--primary)"></i>
+    <h5 class="fw-bold" style="color:var(--primary)">Class XII Tracker</h5>
+    <div class="school-name">Salwan Public School, Tronica City</div>
+    <div class="login-tab mt-3">
+      <button id="tab-teacher" class="active" onclick="switchLoginTab('teacher')">Teacher</button>
+      <button id="tab-student" onclick="switchLoginTab('student')">Student</button>
+    </div>
+    <!-- Teacher login -->
+    <div id="login-teacher">
+      <div class="mb-3">
+        <label class="form-label fw-semibold text-start d-block">Teacher Password</label>
+        <input type="password" id="teacher-pw" class="form-control" placeholder="Enter password" onkeydown="if(event.key==='Enter')loginTeacher()">
+      </div>
+      <button class="btn btn-primary-custom w-100 fw-bold" onclick="loginTeacher()">
+        <i class="fas fa-sign-in-alt me-2"></i>Login as Teacher
+      </button>
+    </div>
+    <!-- Student login -->
+    <div id="login-student" style="display:none">
+      <div class="mb-3">
+        <label class="form-label fw-semibold text-start d-block">Select Your Name</label>
+        <select id="student-login-select" class="form-select">
+          <option value="">Select your name…</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-semibold text-start d-block">PIN</label>
+        <input type="password" id="student-pin" class="form-control" placeholder="Enter your 4-digit PIN" maxlength="4" onkeydown="if(event.key==='Enter')loginStudent()">
+      </div>
+      <button class="btn btn-primary-custom w-100 fw-bold" onclick="loginStudent()">
+        <i class="fas fa-user me-2"></i>View My Progress
+      </button>
+    </div>
+    <div id="login-error" class="mt-2" style="color:#ef4444;font-size:13px;display:none"></div>
+  </div>
+</div>
+
+<!-- MOBILE SIDEBAR TOGGLE -->
+<button id="sidebar-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">
+  <i class="fas fa-bars"></i>
+</button>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="logo">
+    <i class="fas fa-school fa-2x mb-2" style="color:var(--accent)"></i>
+    <h6>Salwan Public School</h6>
+    <p>Tronica City</p>
+  </div>
+  <nav class="mt-2 flex-grow-1">
+    <a href="#" class="active" onclick="showPage('dashboard',this)"><i class="fas fa-th-large"></i> Dashboard</a>
+    <a href="#" onclick="showPage('students',this)"><i class="fas fa-users"></i> Students</a>
+    <a href="#" onclick="showPage('exams',this)"><i class="fas fa-file-alt"></i> Exams & Results</a>
+    <a href="#" onclick="showPage('assignments',this)"><i class="fas fa-tasks"></i> Assignments</a>
+    <a href="#" onclick="showPage('tests',this)"><i class="fas fa-pencil-alt"></i> Class Tests</a>
+    <a href="#" onclick="showPage('syllabus',this)"><i class="fas fa-book-open"></i> Syllabus</a>
+    <a href="#" onclick="showPage('analytics',this)"><i class="fas fa-chart-bar"></i> Analytics</a>
+    <div style="height:1px;background:rgba(255,255,255,0.1);margin:8px 16px"></div>
+    <a href="#" onclick="showPage('attendance',this)"><i class="fas fa-calendar-check"></i> Attendance</a>
+    <a href="#" onclick="showPage('diary',this)"><i class="fas fa-journal-whills"></i> Teacher Diary</a>
+    <a href="#" onclick="showPage('reports',this)"><i class="fas fa-print"></i> Reports</a>
+    <a href="#" onclick="showPage('settings',this)" id="nav-settings"><i class="fas fa-cog"></i> Settings</a>
+  </nav>
+  <div style="padding:14px 16px; color:rgba(255,255,255,0.4); font-size:11px;">
+    Class XII — 2025-26<br>Academic Year
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div id="topbar">
+    <h5 id="page-title"><i class="fas fa-th-large me-2" style="color:var(--accent)"></i>Dashboard</h5>
+    <div class="d-flex align-items-center gap-3">
+      <span style="font-size:12px;color:#64748b"><span id="autosave-dot"></span><span id="autosave-txt">Saved</span></span>
+      <span class="badge" style="background:var(--accent);color:#fff;font-size:12px;" id="role-badge">Teacher</span>
+      <span style="font-size:13px;color:#64748b;"><i class="fas fa-calendar-alt me-1"></i><span id="today-date"></span></span>
+      <button class="btn btn-sm btn-outline-secondary no-print" onclick="showPage('settings',null)" title="Settings"><i class="fas fa-cog"></i></button>
+      <button class="btn btn-sm btn-outline-danger no-print" onclick="doLogout()" title="Logout"><i class="fas fa-sign-out-alt"></i></button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ==================== DASHBOARD ==================== -->
+    <div id="page-dashboard" class="page active">
+      <div class="row g-3 mb-4">
+        <div class="col-md-3">
+          <div class="stat-card blue">
+            <div class="val" id="stat-total">20</div>
+            <div class="lbl">Total Students</div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-card green">
+            <div class="val" id="stat-avg">—</div>
+            <div class="lbl">Class Avg (XII)</div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-card orange">
+            <div class="val" id="stat-exams">0</div>
+            <div class="lbl">Exams Recorded</div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-card red">
+            <div class="val" id="stat-pending">—</div>
+            <div class="lbl">Assignments Pending</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-4">
+        <div class="col-md-8">
+          <div class="card-box">
+            <h6 class="fw-bold mb-3" style="color:var(--primary)"><i class="fas fa-chart-line me-2" style="color:var(--accent)"></i>Class XI Annual Performance (Baseline)</h6>
+            <div class="chart-container"><canvas id="baselineChart"></canvas></div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card-box">
+            <h6 class="fw-bold mb-3" style="color:var(--primary)"><i class="fas fa-award me-2" style="color:var(--accent)"></i>Grade Distribution (XI Annual)</h6>
+            <div class="chart-container"><canvas id="gradeChart"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="card-box">
+            <h6 class="fw-bold mb-3" style="color:var(--primary)"><i class="fas fa-star me-2" style="color:var(--accent)"></i>Top Performers (XI Annual)</h6>
+            <div id="top-performers"></div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card-box">
+            <h6 class="fw-bold mb-3" style="color:var(--primary)"><i class="fas fa-exclamation-triangle me-2 text-warning"></i>Needs Attention</h6>
+            <div id="needs-attention"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== STUDENTS ==================== -->
+    <div id="page-students" class="page">
+      <div id="students-list-view">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div><input type="text" id="student-search" class="form-control form-control-sm" placeholder="Search students..." style="width:240px" oninput="renderStudentCards()"></div>
+          <div class="d-flex gap-2">
+            <select id="student-sort" class="form-select form-select-sm" style="width:160px" onchange="renderStudentCards()">
+              <option value="name">Sort by Name</option>
+              <option value="xi_annual">Sort by XI Annual %</option>
+              <option value="adm">Sort by Adm No.</option>
+            </select>
+          </div>
+        </div>
+        <div class="row g-3" id="student-cards"></div>
+      </div>
+      <div id="student-detail-view" style="display:none">
+        <button class="btn btn-sm btn-outline-secondary mb-3" onclick="showStudentList()"><i class="fas fa-arrow-left me-1"></i>Back to Students</button>
+        <div id="student-detail-content"></div>
+      </div>
+    </div>
+
+    <!-- ==================== EXAMS ==================== -->
+    <div id="page-exams" class="page">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0" style="color:var(--primary)">Class XII Exams</h6>
+        <button class="btn btn-sm btn-primary-custom" onclick="openExamModal()"><i class="fas fa-plus me-1"></i>Add Exam</button>
+      </div>
+      <div id="exam-list"></div>
+    </div>
+
+    <!-- ==================== ASSIGNMENTS ==================== -->
+    <div id="page-assignments" class="page">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0" style="color:var(--primary)">Assignments & Worksheets</h6>
+        <button class="btn btn-sm btn-primary-custom" onclick="openAssignmentModal()"><i class="fas fa-plus me-1"></i>New Assignment</button>
+      </div>
+      <div id="assignment-list"></div>
+    </div>
+
+    <!-- ==================== TESTS ==================== -->
+    <div id="page-tests" class="page">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0" style="color:var(--primary)">Class Tests</h6>
+        <button class="btn btn-sm btn-primary-custom" onclick="openTestModal()"><i class="fas fa-plus me-1"></i>New Test</button>
+      </div>
+      <div id="test-list"></div>
+    </div>
+
+    <!-- ==================== SYLLABUS ==================== -->
+    <div id="page-syllabus" class="page">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0" style="color:var(--primary)">Syllabus & Learning Resources</h6>
+        <button class="btn btn-sm btn-primary-custom" onclick="openSyllabusModal()"><i class="fas fa-plus me-1"></i>Add Resource</button>
+      </div>
+      <ul class="nav nav-tabs mb-3" id="sylTabs">
+        <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#syl-polsci"><i class="fas fa-book me-1"></i>Political Science (CBSE)</a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#syl-resources"><i class="fas fa-folder-open me-1"></i>My Resources / PDFs</a></li>
+      </ul>
+      <div class="tab-content">
+        <div class="tab-pane fade show active" id="syl-polsci">
+          <div class="alert" style="background:#e0f2fe;border:1px solid #7dd3fc;border-radius:8px;padding:10px 16px;margin-bottom:14px;font-size:13px;">
+            <i class="fas fa-info-circle me-2" style="color:#0284c7"></i>
+            Pre-loaded from CBSE syllabus 2025-26. Mark chapters <strong>Covered</strong> as you teach them. Tests tagged to chapters update mastery automatically.
+          </div>
+          <div id="polsci-syllabus-overview"></div>
+        </div>
+        <div class="tab-pane fade" id="syl-resources">
+          <div class="alert" style="background:#e0f2fe;border:1px solid #7dd3fc;border-radius:8px;padding:10px 16px;margin-bottom:14px;font-size:13px;">
+            <i class="fas fa-info-circle me-2" style="color:#0284c7"></i>
+            Upload PDFs (textbooks, notes, worksheets) and link them to subjects and topics.
+          </div>
+          <div id="syllabus-by-subject"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== ANALYTICS ==================== -->
+    <div id="page-analytics" class="page">
+      <ul class="nav nav-tabs mb-4" id="analyticsTabs">
+        <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#at-overview"><i class="fas fa-chart-line me-1"></i>Overview</a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#at-chapters"><i class="fas fa-book me-1"></i>Chapter Mastery</a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#at-heatmap"><i class="fas fa-th me-1"></i>Student × Chapter Heatmap</a></li>
+      </ul>
+      <div class="tab-content">
+        <!-- OVERVIEW TAB -->
+        <div class="tab-pane fade show active" id="at-overview">
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <div class="card-box">
+                <h6 class="fw-bold mb-3" style="color:var(--primary)"><i class="fas fa-chart-line me-2" style="color:var(--accent)"></i>XII Exam Performance Trend</h6>
+                <div class="chart-container"><canvas id="trendChart"></canvas></div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card-box">
+                <h6 class="fw-bold mb-3" style="color:var(--primary)"><i class="fas fa-chart-bar me-2" style="color:var(--accent)"></i>Subject-wise Class Average</h6>
+                <div class="chart-container"><canvas id="subjectChart"></canvas></div>
+              </div>
+            </div>
+          </div>
+          <div class="row g-3">
+            <div class="col-12">
+              <div class="card-box">
+                <h6 class="fw-bold mb-3" style="color:var(--primary)"><i class="fas fa-table me-2" style="color:var(--accent)"></i>XII vs XI Comparison (Political Science)</h6>
+                <div class="chart-container" style="height:320px"><canvas id="compareChart"></canvas></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CHAPTER MASTERY TAB -->
+        <div class="tab-pane fade" id="at-chapters">
+          <div class="row g-3 mb-3">
+            <div class="col-md-4 col-lg-3">
+              <div class="stat-card blue"><div class="val" id="cm-total-chapters">15</div><div class="lbl">Total Chapters</div></div>
+            </div>
+            <div class="col-md-4 col-lg-3">
+              <div class="stat-card green"><div class="val" id="cm-tested-chapters">0</div><div class="lbl">Chapters Tested</div></div>
+            </div>
+            <div class="col-md-4 col-lg-3">
+              <div class="stat-card orange"><div class="val" id="cm-avg-mastery">—</div><div class="lbl">Avg Class Mastery</div></div>
+            </div>
+          </div>
+          <div id="chapter-mastery-list"></div>
+        </div>
+
+        <!-- HEATMAP TAB -->
+        <div class="tab-pane fade" id="at-heatmap">
+          <div class="card-box mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="fw-bold mb-0" style="color:var(--primary)"><i class="fas fa-th me-2" style="color:var(--accent)"></i>Student × Chapter Performance Heatmap</h6>
+              <div class="d-flex gap-2 align-items-center" style="font-size:12px">
+                <span style="background:#d1fae5;padding:2px 8px;border-radius:4px">■ Mastered ≥70%</span>
+                <span style="background:#dbeafe;padding:2px 8px;border-radius:4px">■ Developing 50–69%</span>
+                <span style="background:#fef3c7;padding:2px 8px;border-radius:4px">■ Needs Work &lt;50%</span>
+                <span style="background:#f1f5f9;padding:2px 8px;border-radius:4px">■ Not Tested</span>
+              </div>
+            </div>
+            <div class="overflow-auto"><div id="chapter-heatmap"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== ATTENDANCE ==================== -->
+    <div id="page-attendance" class="page">
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <h6 class="fw-bold mb-0" style="color:var(--primary)">Attendance Register</h6>
+        <div class="d-flex gap-2 flex-wrap">
+          <input type="month" id="att-month" class="form-control form-control-sm" style="width:150px" onchange="renderAttendance()">
+          <button class="btn btn-sm btn-primary-custom" onclick="openAttMarkModal()"><i class="fas fa-plus me-1"></i>Mark Attendance</button>
+          <button class="btn btn-sm btn-outline-success" onclick="exportAttendanceExcel()"><i class="fas fa-file-excel me-1"></i>Export</button>
+        </div>
+      </div>
+      <div class="row g-3 mb-3" id="att-stats-row"></div>
+      <div id="att-table-area"></div>
+    </div>
+
+    <!-- ==================== DIARY ==================== -->
+    <div id="page-diary" class="page">
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <h6 class="fw-bold mb-0" style="color:var(--primary)">Teacher Diary</h6>
+        <div class="d-flex gap-2">
+          <input type="month" id="diary-month" class="form-control form-control-sm" style="width:150px" onchange="renderDiary()">
+          <button class="btn btn-sm btn-primary-custom" onclick="openDiaryModal()"><i class="fas fa-plus me-1"></i>Add Entry</button>
+          <button class="btn btn-sm btn-outline-secondary" onclick="printDiary()"><i class="fas fa-print me-1"></i>Print</button>
+        </div>
+      </div>
+      <div id="diary-area"></div>
+    </div>
+
+    <!-- ==================== REPORTS ==================== -->
+    <div id="page-reports" class="page">
+      <ul class="nav nav-tabs mb-4">
+        <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#rpt-ai"><i class="fas fa-brain me-1"></i>AI Analysis</a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#rpt-cards"><i class="fas fa-id-card me-1"></i>Report Cards</a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#rpt-export"><i class="fas fa-download me-1"></i>Export Data</a></li>
+      </ul>
+      <div class="tab-content">
+        <div class="tab-pane fade show active" id="rpt-ai">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold mb-0" style="color:var(--primary)"><i class="fas fa-robot me-2" style="color:var(--accent)"></i>AI Weak Area Analysis</h6>
+            <button class="btn btn-sm btn-primary-custom" onclick="runAIAnalysis()"><i class="fas fa-sync me-1"></i>Refresh Analysis</button>
+          </div>
+          <div id="ai-analysis-area">
+            <div class="text-center py-4 text-muted"><i class="fas fa-robot fa-2x mb-2 d-block" style="opacity:0.3"></i>Click "Refresh Analysis" to generate insights</div>
+          </div>
+        </div>
+        <div class="tab-pane fade" id="rpt-cards">
+          <div class="row g-3" id="report-card-list"></div>
+        </div>
+        <div class="tab-pane fade" id="rpt-export">
+          <div class="row g-3">
+            <div class="col-md-4"><div class="card-box text-center">
+              <i class="fas fa-file-excel fa-3x mb-3" style="color:#10b981"></i>
+              <h6 class="fw-bold">Full Results Export</h6>
+              <p style="font-size:12px;color:#64748b">All exam results, test scores, assignments for all students</p>
+              <button class="btn btn-sm btn-outline-success w-100" onclick="exportFullExcel()"><i class="fas fa-download me-1"></i>Download Excel</button>
+            </div></div>
+            <div class="col-md-4"><div class="card-box text-center">
+              <i class="fas fa-calendar-check fa-3x mb-3" style="color:#3b82f6"></i>
+              <h6 class="fw-bold">Attendance Export</h6>
+              <p style="font-size:12px;color:#64748b">Monthly attendance summary for all students</p>
+              <button class="btn btn-sm btn-outline-primary w-100" onclick="exportAttendanceExcel()"><i class="fas fa-download me-1"></i>Download Excel</button>
+            </div></div>
+            <div class="col-md-4"><div class="card-box text-center">
+              <i class="fas fa-book fa-3x mb-3" style="color:#8b5cf6"></i>
+              <h6 class="fw-bold">Chapter Mastery Export</h6>
+              <p style="font-size:12px;color:#64748b">Chapter-wise mastery levels for all 20 students</p>
+              <button class="btn btn-sm btn-outline-secondary w-100" onclick="exportMasteryExcel()"><i class="fas fa-download me-1"></i>Download Excel</button>
+            </div></div>
+            <div class="col-md-4"><div class="card-box text-center">
+              <i class="fas fa-file-import fa-3x mb-3" style="color:#f59e0b"></i>
+              <h6 class="fw-bold">Import Marks from Excel</h6>
+              <p style="font-size:12px;color:#64748b">Upload a pre-filled Excel template to import exam marks</p>
+              <button class="btn btn-sm btn-outline-warning w-100" onclick="downloadImportTemplate()"><i class="fas fa-file-download me-1"></i>Get Template</button>
+              <div class="mt-2"><input type="file" id="import-excel-input" accept=".xlsx,.xls" style="display:none" onchange="importFromExcel(this)">
+              <button class="btn btn-sm btn-warning w-100" onclick="document.getElementById('import-excel-input').click()"><i class="fas fa-upload me-1"></i>Upload & Import</button></div>
+            </div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== SETTINGS ==================== -->
+    <div id="page-settings" class="page">
+      <div class="row g-3">
+        <div class="col-md-5">
+          <div class="card-box">
+            <h6 class="fw-bold mb-3" style="color:var(--primary)"><i class="fas fa-lock me-2" style="color:var(--accent)"></i>Change Teacher Password</h6>
+            <div class="mb-3"><label class="form-label fw-semibold">Current Password</label>
+              <input type="password" id="pw-current" class="form-control"></div>
+            <div class="mb-3"><label class="form-label fw-semibold">New Password</label>
+              <input type="password" id="pw-new" class="form-control"></div>
+            <div class="mb-3"><label class="form-label fw-semibold">Confirm New Password</label>
+              <input type="password" id="pw-confirm" class="form-control"></div>
+            <button class="btn btn-sm btn-primary-custom" onclick="changePassword()"><i class="fas fa-save me-1"></i>Update Password</button>
+            <div id="pw-msg" class="mt-2" style="font-size:13px"></div>
+          </div>
+        </div>
+        <div class="col-md-7">
+          <div class="card-box mb-3">
+            <h6 class="fw-bold mb-3" style="color:var(--primary)"><i class="fas fa-users me-2" style="color:var(--accent)"></i>Student PINs</h6>
+            <div style="font-size:12px;color:#64748b;margin-bottom:10px">Default PIN = last 4 digits of Admission No. Students use this to login and view their own progress.</div>
+            <table class="table table-sm"><thead><tr style="background:#f8fafc"><th>Student</th><th>Adm No</th><th>Default PIN</th></tr></thead>
+            <tbody id="student-pins-table"></tbody></table>
+          </div>
+          <div class="card-box">
+            <h6 class="fw-bold mb-3" style="color:var(--primary)"><i class="fas fa-fire me-2" style="color:#f59e0b"></i>Cloud Sync – Firebase</h6>
+            <!-- Status bar -->
+            <div id="fb-status-bar" style="padding:8px 12px;border-radius:8px;font-size:13px;margin-bottom:14px;background:#fee2e2;color:#991b1b">
+              <i class="fas fa-circle me-1"></i><span id="fb-status-text">🔴 Not Connected — data saves to this browser only</span>
+            </div>
+            <!-- Setup guide -->
+            <details style="margin-bottom:12px">
+              <summary style="font-size:12px;font-weight:600;color:var(--primary);cursor:pointer">📋 How to get Firebase config (one-time setup, ~5 min)</summary>
+              <ol style="font-size:12px;color:#475569;padding-left:18px;margin-top:8px;line-height:2">
+                <li>Go to <a href="https://console.firebase.google.com" target="_blank" style="color:var(--primary)">console.firebase.google.com</a></li>
+                <li>Click <strong>Add project</strong> → give it a name → Continue</li>
+                <li>Disable Google Analytics → <strong>Create project</strong></li>
+                <li>Click <strong>Build → Realtime Database → Create database</strong></li>
+                <li>Choose any location → select <strong>Start in test mode</strong> → Enable</li>
+                <li>Go back to <strong>Project Overview</strong> → click the <strong>&lt;/&gt;</strong> (Web) icon</li>
+                <li>Register app (any name) → copy the 4 config values below</li>
+              </ol>
+            </details>
+            <!-- Config fields -->
+            <div class="row g-2 mb-3">
+              <div class="col-12"><input type="text" id="fb-apikey" class="form-control form-control-sm" placeholder="apiKey — e.g. AIzaSyB..."></div>
+              <div class="col-12"><input type="text" id="fb-authdomain" class="form-control form-control-sm" placeholder="authDomain — e.g. myapp.firebaseapp.com"></div>
+              <div class="col-12"><input type="text" id="fb-dburl" class="form-control form-control-sm" placeholder="databaseURL — e.g. https://myapp-default-rtdb.firebaseio.com"></div>
+              <div class="col-12"><input type="text" id="fb-projectid" class="form-control form-control-sm" placeholder="projectId — e.g. myapp-12345"></div>
+            </div>
+            <!-- Buttons -->
+            <div class="d-flex gap-2 flex-wrap">
+              <button class="btn btn-sm btn-warning fw-bold" onclick="connectFirebase(false)"><i class="fas fa-plug me-1"></i>Connect to Firebase</button>
+              <button class="btn btn-sm btn-success fw-bold" id="fb-migrate-btn" style="display:none" onclick="migrateToFirebase()"><i class="fas fa-cloud-upload-alt me-1"></i>Upload Local Data to Cloud</button>
+              <button class="btn btn-sm btn-outline-danger" id="fb-disconnect-btn" style="display:none" onclick="disconnectFirebase()"><i class="fas fa-unlink me-1"></i>Disconnect</button>
+            </div>
+            <div id="fb-msg" class="mt-2" style="font-size:12px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- ===== MODALS ===== -->
+
+<!-- EXAM MODAL -->
+<div class="modal fade" id="examModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Add Exam / Enter Results</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <div class="row g-3 mb-3">
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Exam Name *</label>
+            <input type="text" id="exam-name" class="form-control" placeholder="e.g. Mid-Term 1">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Subject *</label>
+            <select id="exam-subject" class="form-select">
+              <option value="">Select Subject</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label fw-semibold">Date</label>
+            <input type="date" id="exam-date" class="form-control">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label fw-semibold">Max Marks</label>
+            <input type="number" id="exam-maxmarks" class="form-control" value="100">
+          </div>
+        </div>
+        <hr>
+        <h6 class="fw-bold mb-3">Enter Marks for Each Student</h6>
+        <div id="exam-marks-table"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-sm btn-primary-custom" onclick="saveExam()"><i class="fas fa-save me-1"></i>Save Exam</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ASSIGNMENT MODAL -->
+<div class="modal fade" id="assignmentModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">New Assignment / Worksheet</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <div class="row g-3 mb-3">
+          <div class="col-md-5">
+            <label class="form-label fw-semibold">Title *</label>
+            <input type="text" id="asgn-title" class="form-control" placeholder="Assignment title">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Subject</label>
+            <select id="asgn-subject" class="form-select"><option value="">Select</option></select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label fw-semibold">Due Date</label>
+            <input type="date" id="asgn-due" class="form-control">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label fw-semibold">Max Marks</label>
+            <input type="number" id="asgn-marks" class="form-control" value="10">
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Description / Instructions</label>
+          <textarea id="asgn-desc" class="form-control" rows="2" placeholder="Describe the assignment or paste worksheet content..."></textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Topics Covered</label>
+          <input type="text" id="asgn-topics" class="form-control" placeholder="e.g. Federalism, Democracy, Indian Constitution">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold"><i class="fas fa-file-pdf me-1 text-danger"></i>Attach Worksheet PDF</label>
+          <div class="pdf-drop-zone" id="asgn-drop" onclick="document.getElementById('asgn-pdf-input').click()" ondragover="dragOver(event,'asgn-drop')" ondragleave="dragLeave('asgn-drop')" ondrop="dropFile(event,'asgn-pdf-input','asgn-drop','asgn-pdf-preview')">
+            <i class="fas fa-cloud-upload-alt mb-2 d-block"></i>
+            <div style="font-size:13px;color:#64748b">Click or drag &amp; drop a PDF file here</div>
+            <div style="font-size:11px;color:#94a3b8">Max 20 MB</div>
+          </div>
+          <input type="file" id="asgn-pdf-input" accept=".pdf" style="display:none" onchange="fileSelected(this,'asgn-drop','asgn-pdf-preview')">
+          <div id="asgn-pdf-preview" class="mt-2"></div>
+        </div>
+        <hr>
+        <h6 class="fw-bold mb-2">Submission Tracking</h6>
+        <div id="asgn-submission-table"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-sm btn-primary-custom" onclick="saveAssignment()"><i class="fas fa-save me-1"></i>Save Assignment</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TEST MODAL -->
+<div class="modal fade" id="testModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">New Class Test</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <div class="row g-3 mb-3">
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Test Title *</label>
+            <input type="text" id="test-title" class="form-control" placeholder="e.g. Unit Test 1">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Subject</label>
+            <select id="test-subject" class="form-select"><option value="">Select</option></select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label fw-semibold">Date</label>
+            <input type="date" id="test-date" class="form-control">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label fw-semibold">Max Marks</label>
+            <input type="number" id="test-maxmarks" class="form-control" value="25">
+          </div>
+        </div>
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Chapter (Political Science)</label>
+            <select id="test-chapter" class="form-select">
+              <option value="">— Select Chapter —</option>
+              <optgroup label="Part A: Contemporary World Politics">
+                <option value="A1">A1 · The End of Bipolarity (6M)</option>
+                <option value="A2">A2 · Contemporary Centres of Power (6M)</option>
+                <option value="A3">A3 · Contemporary South Asia (6M)</option>
+                <option value="A4">A4 · International Organizations (6M)</option>
+                <option value="A5">A5 · Security in the Contemporary World (6M)</option>
+                <option value="A6">A6 · Environment and Natural Resources (6M)</option>
+                <option value="A7">A7 · Globalisation (4M)</option>
+              </optgroup>
+              <optgroup label="Part B: Politics in India since Independence">
+                <option value="B1">B1 · Challenges of Nation-Building (6M)</option>
+                <option value="B2">B2 · Era of One-Party Dominance (4M)</option>
+                <option value="B3">B3 · Politics of Planned Development (2M)</option>
+                <option value="B4">B4 · India's External Relations (6M)</option>
+                <option value="B5">B5 · Challenges to Congress System (4M)</option>
+                <option value="B6">B6 · Crisis of Democratic Order (4M)</option>
+                <option value="B7">B7 · Regional Aspirations (6M)</option>
+                <option value="B8">B8 · Recent Developments in Indian Politics (8M)</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Topics Tested</label>
+            <input type="text" id="test-topics" class="form-control" placeholder="e.g. Soviet Disintegration, Shock Therapy">
+          </div>
+        </div>
+        <hr>
+        <h6 class="fw-bold mb-3">Enter Scores</h6>
+        <div id="test-marks-table"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-sm btn-primary-custom" onclick="saveTest()"><i class="fas fa-save me-1"></i>Save Test</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SYLLABUS MODAL -->
+<div class="modal fade" id="syllabusModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Add Syllabus / Resource</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Subject *</label>
+          <select id="syl-subject" class="form-select"><option value="">Select Subject</option></select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Resource Title *</label>
+          <input type="text" id="syl-title" class="form-control" placeholder="e.g. Chapter 1: The Cold War Era">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Type</label>
+          <select id="syl-type" class="form-select">
+            <option value="chapter">Chapter / Topic</option>
+            <option value="book">Textbook Reference</option>
+            <option value="worksheet">Worksheet / Material</option>
+            <option value="note">Note / Summary</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Description / Content</label>
+          <textarea id="syl-desc" class="form-control" rows="3" placeholder="Paste chapter topics, learning objectives, or paste content here..."></textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold"><i class="fas fa-file-pdf me-1 text-danger"></i>Upload PDF (Syllabus / Book / Notes)</label>
+          <div class="pdf-drop-zone" id="syl-drop" onclick="document.getElementById('syl-pdf-input').click()" ondragover="dragOver(event,'syl-drop')" ondragleave="dragLeave('syl-drop')" ondrop="dropFile(event,'syl-pdf-input','syl-drop','syl-pdf-preview')">
+            <i class="fas fa-file-pdf mb-2 d-block" style="color:#ef4444"></i>
+            <div style="font-size:13px;color:#64748b">Click or drag &amp; drop a PDF here</div>
+            <div style="font-size:11px;color:#94a3b8">Syllabus, textbook pages, notes — Max 20 MB</div>
+          </div>
+          <input type="file" id="syl-pdf-input" accept=".pdf" style="display:none" onchange="fileSelected(this,'syl-drop','syl-pdf-preview')">
+          <div id="syl-pdf-preview" class="mt-2"></div>
+        </div>
+        <div class="form-check mb-3">
+          <input class="form-check-input" type="checkbox" id="syl-covered">
+          <label class="form-check-label">Mark as covered in class</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-sm btn-primary-custom" onclick="saveSyllabus()"><i class="fas fa-save me-1"></i>Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ATTENDANCE MARK MODAL -->
+<div class="modal fade" id="attModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title"><i class="fas fa-calendar-check me-2"></i>Mark Attendance</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <div class="row g-3 mb-3">
+          <div class="col-md-4"><label class="form-label fw-semibold">Date *</label>
+            <input type="date" id="att-date" class="form-control"></div>
+          <div class="col-md-4"><label class="form-label fw-semibold">Subject</label>
+            <select id="att-subject" class="form-select"><option value="">All / General</option></select></div>
+          <div class="col-md-4 d-flex align-items-end gap-2">
+            <button class="btn btn-sm btn-outline-success w-100" onclick="markAllAtt('P')"><i class="fas fa-check me-1"></i>All Present</button>
+            <button class="btn btn-sm btn-outline-danger w-100" onclick="markAllAtt('A')"><i class="fas fa-times me-1"></i>All Absent</button>
+          </div>
+        </div>
+        <div style="font-size:12px;color:#64748b;margin-bottom:8px">Click status to toggle: <span class="att-cell att-P">P</span> Present &nbsp; <span class="att-cell att-A">A</span> Absent &nbsp; <span class="att-cell att-L">L</span> Late &nbsp; <span class="att-cell att-H">H</span> Holiday</div>
+        <div id="att-mark-grid"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-sm btn-primary-custom" onclick="saveAttendance()"><i class="fas fa-save me-1"></i>Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DIARY MODAL -->
+<div class="modal fade" id="diaryModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title"><i class="fas fa-journal-whills me-2"></i>Add Diary Entry</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <div class="row g-3 mb-3">
+          <div class="col-md-4"><label class="form-label fw-semibold">Date *</label>
+            <input type="date" id="diary-date" class="form-control"></div>
+          <div class="col-md-4"><label class="form-label fw-semibold">Period / Time</label>
+            <input type="text" id="diary-period" class="form-control" placeholder="e.g. 1st Period, 10:00am"></div>
+          <div class="col-md-4"><label class="form-label fw-semibold">Subject</label>
+            <select id="diary-subject" class="form-select"><option value="">Select</option></select></div>
+        </div>
+        <div class="mb-3"><label class="form-label fw-semibold">Chapter</label>
+          <select id="diary-chapter" class="form-select">
+            <option value="">— Select Chapter —</option>
+            <optgroup label="Part A: Contemporary World Politics">
+              <option value="A1">A1 · The End of Bipolarity</option>
+              <option value="A2">A2 · Contemporary Centres of Power</option>
+              <option value="A3">A3 · Contemporary South Asia</option>
+              <option value="A4">A4 · International Organizations</option>
+              <option value="A5">A5 · Security in Contemporary World</option>
+              <option value="A6">A6 · Environment and Natural Resources</option>
+              <option value="A7">A7 · Globalisation</option>
+            </optgroup>
+            <optgroup label="Part B: Politics in India since Independence">
+              <option value="B1">B1 · Challenges of Nation-Building</option>
+              <option value="B2">B2 · Era of One-Party Dominance</option>
+              <option value="B3">B3 · Politics of Planned Development</option>
+              <option value="B4">B4 · India's External Relations</option>
+              <option value="B5">B5 · Challenges to Congress System</option>
+              <option value="B6">B6 · Crisis of Democratic Order</option>
+              <option value="B7">B7 · Regional Aspirations</option>
+              <option value="B8">B8 · Recent Developments</option>
+            </optgroup>
+          </select></div>
+        <div class="mb-3"><label class="form-label fw-semibold">Topics Taught</label>
+          <textarea id="diary-topics" class="form-control" rows="2" placeholder="Topics covered in today's class…"></textarea></div>
+        <div class="mb-3"><label class="form-label fw-semibold">Homework / Assignment Given</label>
+          <input type="text" id="diary-hw" class="form-control" placeholder="e.g. Read pages 12-18, Answer Q1-Q5"></div>
+        <div class="mb-3"><label class="form-label fw-semibold">Remarks</label>
+          <textarea id="diary-remarks" class="form-control" rows="2" placeholder="Class observations, doubts raised, next class plan…"></textarea></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-sm btn-primary-custom" onclick="saveDiaryEntry()"><i class="fas fa-save me-1"></i>Save Entry</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- REPORT CARD MODAL -->
+<div class="modal fade" id="reportCardModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fas fa-id-card me-2"></i>Student Report Card</h5>
+        <div class="ms-auto d-flex gap-2 me-3">
+          <button class="btn btn-sm btn-outline-secondary" onclick="window.print()"><i class="fas fa-print me-1"></i>Print</button>
+          <button class="btn btn-sm btn-accent" onclick="exportReportCardPDF()"><i class="fas fa-file-pdf me-1"></i>Save PDF</button>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-0" id="report-card-area"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PDF VIEWER MODAL -->
+<div class="modal fade" id="pdfViewerModal" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fas fa-file-pdf me-2"></i><span id="pdf-viewer-title">PDF Viewer</span></h5>
+        <div class="ms-auto d-flex gap-2 me-3">
+          <button class="btn btn-sm btn-accent" onclick="downloadCurrentPdf()"><i class="fas fa-download me-1"></i>Download</button>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-2">
+        <iframe id="pdf-viewer-frame" class="pdf-viewer-iframe" src=""></iframe>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW EXAM MODAL -->
+<div class="modal fade" id="viewExamModal" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title" id="viewExamTitle">Exam Results</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body" id="viewExamBody"></div>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW ASSIGNMENT MODAL -->
+<div class="modal fade" id="viewAssignmentModal" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title" id="viewAsgnTitle">Assignment</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body" id="viewAsgnBody"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// ===================== DATA =====================
+const STUDENTS_BASE = [
+  { id:1, admNo:"2548", name:"Aarav", xi:{ mt1Marks:43, mt1Pct:43, mt1Grade:"C2", annMarks:64.81, annPct:54.01, annGrade:"C1" } },
+  { id:2, admNo:"2472", name:"Aarav Bhati", xi:{ mt1Marks:54, mt1Pct:54, mt1Grade:"C1", annMarks:73.94, annPct:61.62, annGrade:"B2" } },
+  { id:3, admNo:"3412", name:"Anchal", xi:{ mt1Marks:48, mt1Pct:48, mt1Grade:"C2", annMarks:86.63, annPct:72.19, annGrade:"B1" } },
+  { id:4, admNo:"1799", name:"Anmol Sharma", xi:{ mt1Marks:56, mt1Pct:56, mt1Grade:"C1", annMarks:57.94, annPct:48.28, annGrade:"C2" } },
+  { id:5, admNo:"3406", name:"Drishti", xi:{ mt1Marks:66, mt1Pct:66, mt1Grade:"B2", annMarks:83.75, annPct:69.79, annGrade:"B2" } },
+  { id:6, admNo:"1756", name:"Janvi Mahanta", xi:{ mt1Marks:45, mt1Pct:45, mt1Grade:"C2", annMarks:60.57, annPct:50.48, annGrade:"C2" } },
+  { id:7, admNo:"3316", name:"Kajal Kumari", xi:{ mt1Marks:45, mt1Pct:45, mt1Grade:"C2", annMarks:65.38, annPct:54.48, annGrade:"C1" } },
+  { id:8, admNo:"3395", name:"Kanak", xi:{ mt1Marks:46, mt1Pct:46, mt1Grade:"C2", annMarks:68.13, annPct:56.78, annGrade:"C1" } },
+  { id:9, admNo:"2614", name:"Kritika", xi:{ mt1Marks:31, mt1Pct:31, mt1Grade:"E", annMarks:40.03, annPct:33.36, annGrade:"D" } },
+  { id:10, admNo:"2722", name:"Mansi Khari", xi:{ mt1Marks:58, mt1Pct:58, mt1Grade:"C1", annMarks:65.5, annPct:54.58, annGrade:"C1" } },
+  { id:11, admNo:"3410", name:"Naitik Singh Mandaar", xi:{ mt1Marks:37, mt1Pct:37, mt1Grade:"D", annMarks:50.25, annPct:41.88, annGrade:"C2" } },
+  { id:12, admNo:"1417", name:"Prisha Yadav", xi:{ mt1Marks:75, mt1Pct:75, mt1Grade:"B1", annMarks:103.63, annPct:86.36, annGrade:"A2" } },
+  { id:13, admNo:"3390", name:"Shreya Bansal", xi:{ mt1Marks:47, mt1Pct:47, mt1Grade:"C2", annMarks:71.56, annPct:59.63, annGrade:"C1" } },
+  { id:14, admNo:"1314", name:"Tanishka Shakya", xi:{ mt1Marks:73, mt1Pct:73, mt1Grade:"B1", annMarks:97.19, annPct:80.99, annGrade:"B1" } },
+  { id:15, admNo:"3414", name:"Vaibhav Tyagi", xi:{ mt1Marks:81, mt1Pct:81, mt1Grade:"A2", annMarks:105.82, annPct:88.18, annGrade:"A2" } },
+  { id:16, admNo:"3396", name:"Vaishnavi Tomar", xi:{ mt1Marks:31, mt1Pct:31, mt1Grade:"E", annMarks:55, annPct:45.83, annGrade:"C2" } },
+  { id:17, admNo:"1471", name:"Vansh Chaudhary", xi:{ mt1Marks:34, mt1Pct:34, mt1Grade:"D", annMarks:54.82, annPct:45.68, annGrade:"C2" } },
+  { id:18, admNo:"1421", name:"Vanya Singh", xi:{ mt1Marks:49, mt1Pct:49, mt1Grade:"C2", annMarks:57.69, annPct:48.08, annGrade:"C2" } },
+  { id:19, admNo:"1141", name:"Vardaan Chaudhary", xi:{ mt1Marks:45, mt1Pct:45, mt1Grade:"C2", annMarks:71.69, annPct:59.74, annGrade:"C1" } },
+  { id:20, admNo:"2145", name:"Zainab Rouf Shah", xi:{ mt1Marks:71, mt1Pct:71, mt1Grade:"B1", annMarks:94, annPct:78.33, annGrade:"B1" } }
+];
+
+const DEFAULT_SUBJECTS = [
+  "Political Science","History","Geography","English","Hindi","Sociology","Economics","Fine Arts"
+];
+
+// ===== POLITICAL SCIENCE SYLLABUS (Class XII, 2025-26) =====
+const POLSCI_SYLLABUS = {
+  partA: {
+    name: 'Part A: Contemporary World Politics',
+    chapters: [
+      { id:'A1', num:1, name:'The End of Bipolarity', marks:6,
+        topics:['Soviet System','Gorbachev and Disintegration','Causes of Soviet Disintegration','Consequences of Disintegration','Shock Therapy','New Entities – Russia, Balkan, Central Asian States','India–Russia Relations'] },
+      { id:'A2', num:2, name:'Contemporary Centres of Power', marks:6,
+        topics:['European Union (EU)','ASEAN','Rise of China as Economic Power','Japan and South Korea as Emerging Powers','India–China Relations'] },
+      { id:'A3', num:3, name:'Contemporary South Asia', marks:6,
+        topics:['Military & Democracy in Pakistan & Bangladesh','Monarchy & Democracy in Nepal','Ethnic Conflict in Sri Lanka','India–Pakistan Conflicts','India and Neighbours','SAARC','Role of US & China in South Asia'] },
+      { id:'A4', num:4, name:'International Organizations', marks:6,
+        topics:['Meaning & Importance of International Orgs','Evolution & Structure of UN','Principal Organs of UN','UN Reforms after Cold War','India and UN Reforms','IMF, World Bank, WTO','ILO and IAEA','NGOs – Amnesty International, Human Rights Watch'] },
+      { id:'A5', num:5, name:'Security in the Contemporary World', marks:6,
+        topics:['Traditional Concept of Security','Non-Traditional Security Notions','New Sources of Threats','Cooperative Security','India\'s Security Strategy'] },
+      { id:'A6', num:6, name:'Environment and Natural Resources', marks:6,
+        topics:['Environmental Concerns','Global Commons','Common but Differentiated Responsibilities','India\'s Stand on Environment','Environmental Movements','Resource Geopolitics','Rights of Indigenous Peoples'] },
+      { id:'A7', num:7, name:'Globalisation', marks:4,
+        topics:['Concept of Globalisation','Causes and Consequences','India and Globalisation','Resistance to Globalisation','India and Resistance Movements'] }
+    ]
+  },
+  partB: {
+    name: 'Part B: Politics in India since Independence',
+    chapters: [
+      { id:'B1', num:1, name:'Challenges of Nation-Building', marks:6,
+        topics:['Three Challenges at Independence','Partition – Displacement & Rehabilitation','Integration of Princely States (Hyderabad, Manipur)','Reorganisation of States on Linguistic Basis'] },
+      { id:'B2', num:2, name:'Era of One-Party Dominance', marks:4,
+        topics:['Challenge of Building Democracy','Congress Dominance in First Three Elections','Nature of Congress Dominance','Congress as Social & Ideological Coalition','Emergence of Opposition Parties'] },
+      { id:'B3', num:3, name:'Politics of Planned Development', marks:2,
+        topics:['Ideas of Development','Planning Commission','First Five Year Plan','Rapid Industrialisation Debate','Left vs Right Ideology'] },
+      { id:'B4', num:4, name:"India's External Relations", marks:6,
+        topics:['Policy of Non-Alignment (NAM)','Nehru\'s Role in Foreign Policy','Afro-Asian Unity','China Invasion 1962','Bangladesh War 1971','India\'s Nuclear Policy'] },
+      { id:'B5', num:5, name:'Challenges to Congress System', marks:4,
+        topics:['Political Succession: Nehru → Shastri → Indira','Fourth General Election 1967','Non-Congressism','Congress Split 1969','Presidential Election 1969','1971 Election & Restoration of Congress'] },
+      { id:'B6', num:6, name:'Crisis of Democratic Order', marks:4,
+        topics:['Background to Emergency','Gujarat & Bihar Movements','Conflict with Judiciary','Declaration of Emergency 1975','Consequences of Emergency','Lessons of Emergency','Janata Government 1977','Legacy'] },
+      { id:'B7', num:7, name:'Regional Aspirations', marks:6,
+        topics:['Region and the Nation','Jammu & Kashmir – Roots of Dispute','J&K – Politics since 1948 and Insurgency','Punjab – Cycle of Violence & Road to Peace','Northeast – Demand for Autonomy','Secessionist Movements in Northeast','Assam & National Integration'] },
+      { id:'B8', num:8, name:'Recent Developments in Indian Politics', marks:8,
+        topics:['Era of Coalition Politics','Mandal Commission & Rise of Backward Classes','Communalism, Secularism and Democracy','Ayodhya Dispute','Emergence of New Consensus','Lok Sabha Elections 2004','Growing Consensus'] }
+    ]
+  }
+};
+const ALL_CHAPTERS = [...POLSCI_SYLLABUS.partA.chapters, ...POLSCI_SYLLABUS.partB.chapters];
+
+// ===================== STATE =====================
+function ls(key,def) { try { return JSON.parse(localStorage.getItem(key)) ?? def; } catch(e) { return def; } }
+function ss(key,val) { localStorage.setItem(key, JSON.stringify(val)); }
+
+function getSubjects() { return ls('xii_subjects', DEFAULT_SUBJECTS); }
+function getExams() { return ls('xii_exams', []); }
+function getAssignments() { return ls('xii_assignments', []); }
+function getTests() { return ls('xii_tests', []); }
+function getSyllabus() { return ls('xii_syllabus', []); }
+function getStudents() { return STUDENTS_BASE; }
+
+// ===================== NAVIGATION =====================
+const PAGE_TITLES = {
+  dashboard:'<i class="fas fa-th-large me-2" style="color:var(--accent)"></i>Dashboard',
+  students:'<i class="fas fa-users me-2" style="color:var(--accent)"></i>Students',
+  exams:'<i class="fas fa-file-alt me-2" style="color:var(--accent)"></i>Exams & Results',
+  assignments:'<i class="fas fa-tasks me-2" style="color:var(--accent)"></i>Assignments',
+  tests:'<i class="fas fa-pencil-alt me-2" style="color:var(--accent)"></i>Class Tests',
+  syllabus:'<i class="fas fa-book-open me-2" style="color:var(--accent)"></i>Syllabus & Resources',
+  analytics:'<i class="fas fa-chart-bar me-2" style="color:var(--accent)"></i>Analytics'
+};
+
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('#sidebar nav a').forEach(a => a.classList.remove('active'));
+  if(el) el.classList.add('active');
+  document.getElementById('page-title').innerHTML = PAGE_TITLES[id] || id;
+  if(id==='dashboard') renderDashboard();
+  if(id==='students') renderStudentCards();
+  if(id==='exams') renderExams();
+  if(id==='assignments') renderAssignments();
+  if(id==='tests') renderTests();
+  if(id==='syllabus') { renderPolsciSyllabusOverview(); renderSyllabus(); }
+  if(id==='analytics') renderAnalytics();
+  if(id==='attendance') renderAttendance();
+  if(id==='diary') renderDiary();
+  if(id==='reports') { renderReportCardList(); }
+  if(id==='settings') renderSettingsPage();
+  // Hide mobile sidebar on nav
+  document.getElementById('sidebar').classList.remove('open');
+  return false;
+}
+
+// ===================== UTILS =====================
+function gradeBadge(g) {
+  const cls = g ? 'grade-'+g.replace(/\d/,'') : 'grade-D';
+  return `<span class="grade-badge ${cls}">${g||'—'}</span>`;
+}
+
+function pctColor(p) {
+  if(p>=75) return '#10b981';
+  if(p>=60) return '#3b82f6';
+  if(p>=45) return '#f59e0b';
+  return '#ef4444';
+}
+
+function initDate() {
+  const d = new Date();
+  document.getElementById('today-date').textContent = d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+}
+
+function populateSubjectDropdowns() {
+  const subjects = getSubjects();
+  ['exam-subject','asgn-subject','test-subject','syl-subject'].forEach(id => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.innerHTML = '<option value="">Select Subject</option>' + subjects.map(s=>`<option value="${s}">${s}</option>`).join('');
+  });
+}
+
+// ===================== DASHBOARD =====================
+let baselineChartInst, gradeChartInst;
+
+function renderDashboard() {
+  const students = getStudents();
+  const exams = getExams();
+  const assignments = getAssignments();
+
+  // Stats
+  document.getElementById('stat-total').textContent = students.length;
+  document.getElementById('stat-exams').textContent = exams.length;
+
+  // Calc XII avg if exams exist
+  if(exams.length > 0) {
+    const allPcts = [];
+    exams.forEach(ex => {
+      ex.results && Object.values(ex.results).forEach(r => {
+        if(r.marks !== '' && r.marks !== null && !isNaN(r.marks)) {
+          allPcts.push((parseFloat(r.marks)/ex.maxMarks)*100);
+        }
+      });
+    });
+    if(allPcts.length) {
+      const avg = allPcts.reduce((a,b)=>a+b,0)/allPcts.length;
+      document.getElementById('stat-avg').textContent = avg.toFixed(1)+'%';
+    }
+  } else {
+    document.getElementById('stat-avg').textContent = '—';
+  }
+
+  // Pending assignments
+  const pending = assignments.filter(a => {
+    if(!a.dueDate) return false;
+    return new Date(a.dueDate) >= new Date();
+  }).length;
+  document.getElementById('stat-pending').textContent = pending || 0;
+
+  // Top performers (XI annual)
+  const sorted = [...students].sort((a,b) => b.xi.annPct - a.xi.annPct);
+  document.getElementById('top-performers').innerHTML = sorted.slice(0,5).map(s => `
+    <div class="d-flex align-items-center gap-3 mb-2 p-2 rounded" style="background:#f8fafc">
+      <div style="width:28px;height:28px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">${s.name[0]}</div>
+      <div class="flex-grow-1">
+        <div style="font-size:13px;font-weight:600">${s.name}</div>
+        <div class="progress-bar-custom"><div class="progress-fill" style="width:${s.xi.annPct}%;background:${pctColor(s.xi.annPct)}"></div></div>
+      </div>
+      <div class="text-end">
+        <div style="font-size:13px;font-weight:700;color:${pctColor(s.xi.annPct)}">${s.xi.annPct}%</div>
+        ${gradeBadge(s.xi.annGrade)}
+      </div>
+    </div>
+  `).join('');
+
+  // Needs attention (bottom 5)
+  document.getElementById('needs-attention').innerHTML = sorted.slice(-5).reverse().map(s => `
+    <div class="alert-needs d-flex align-items-center gap-3 mb-2">
+      <div style="width:28px;height:28px;border-radius:50%;background:#ef4444;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">${s.name[0]}</div>
+      <div class="flex-grow-1">
+        <div style="font-size:13px;font-weight:600">${s.name}</div>
+        <div style="font-size:11px;color:#64748b">XI Annual: ${s.xi.annPct}% — ${s.xi.annGrade}</div>
+      </div>
+      ${gradeBadge(s.xi.annGrade)}
+    </div>
+  `).join('');
+
+  // Baseline chart
+  if(baselineChartInst) baselineChartInst.destroy();
+  const ctx = document.getElementById('baselineChart').getContext('2d');
+  baselineChartInst = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: students.map(s => s.name.split(' ')[0]),
+      datasets: [{
+        label: 'XI Annual %',
+        data: students.map(s => s.xi.annPct),
+        backgroundColor: students.map(s => pctColor(s.xi.annPct)+'99'),
+        borderColor: students.map(s => pctColor(s.xi.annPct)),
+        borderWidth: 1, borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, max: 100, ticks: { callback: v=>v+'%' } } }
+    }
+  });
+
+  // Grade distribution chart
+  if(gradeChartInst) gradeChartInst.destroy();
+  const grades = { A1:0, A2:0, B1:0, B2:0, C1:0, C2:0, D:0, E:0 };
+  students.forEach(s => { if(grades[s.xi.annGrade]!==undefined) grades[s.xi.annGrade]++; });
+  const ctx2 = document.getElementById('gradeChart').getContext('2d');
+  gradeChartInst = new Chart(ctx2, {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(grades).filter(g=>grades[g]>0),
+      datasets: [{ data: Object.values(grades).filter(v=>v>0),
+        backgroundColor: ['#10b981','#34d399','#3b82f6','#60a5fa','#f59e0b','#fbbf24','#ef4444','#ec4899'] }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+  });
+}
+
+// ===================== STUDENTS =====================
+function renderStudentCards() {
+  const students = getStudents();
+  const search = (document.getElementById('student-search')?.value||'').toLowerCase();
+  const sort = document.getElementById('student-sort')?.value||'name';
+  let filtered = students.filter(s => s.name.toLowerCase().includes(search) || s.admNo.includes(search));
+  if(sort==='name') filtered.sort((a,b)=>a.name.localeCompare(b.name));
+  if(sort==='xi_annual') filtered.sort((a,b)=>b.xi.annPct-a.xi.annPct);
+  if(sort==='adm') filtered.sort((a,b)=>a.admNo.localeCompare(b.admNo));
+
+  const exams = getExams();
+  document.getElementById('student-cards').innerHTML = filtered.map(s => {
+    const xiiScores = [];
+    exams.forEach(ex => { if(ex.results && ex.results[s.id] && ex.results[s.id].marks!=='') xiiScores.push((parseFloat(ex.results[s.id].marks)/ex.maxMarks)*100); });
+    const xiiAvg = xiiScores.length ? (xiiScores.reduce((a,b)=>a+b,0)/xiiScores.length).toFixed(1) : null;
+
+    return `<div class="col-md-4 col-lg-3">
+      <div class="student-card" onclick="showStudentDetail(${s.id})">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <div class="avatar">${s.name[0]}</div>
+          <div>
+            <div style="font-weight:700;font-size:14px">${s.name}</div>
+            <div style="font-size:11px;color:#64748b">Adm: ${s.admNo}</div>
+          </div>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <span style="font-size:11px;color:#64748b">XI Annual</span>
+          <span style="font-size:12px;font-weight:600;color:${pctColor(s.xi.annPct)}">${s.xi.annPct}% ${gradeBadge(s.xi.annGrade)}</span>
+        </div>
+        <div class="progress-bar-custom mb-2"><div class="progress-fill" style="width:${s.xi.annPct}%;background:${pctColor(s.xi.annPct)}"></div></div>
+        ${xiiAvg ? `<div class="d-flex justify-content-between"><span style="font-size:11px;color:#64748b">XII Avg</span><span style="font-size:12px;font-weight:700;color:${pctColor(parseFloat(xiiAvg))}">${xiiAvg}%</span></div>` : '<div style="font-size:11px;color:#94a3b8">No XII results yet</div>'}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function showStudentList() {
+  document.getElementById('students-list-view').style.display='';
+  document.getElementById('student-detail-view').style.display='none';
+}
+
+function showStudentDetail(id) {
+  const s = getStudents().find(x=>x.id===id);
+  if(!s) return;
+  const exams = getExams();
+  const assignments = getAssignments();
+  const tests = getTests();
+
+  const examRows = exams.map(ex => {
+    const r = ex.results && ex.results[id];
+    const marks = r && r.marks!=='' ? r.marks : '—';
+    const pct = r && r.marks!=='' ? ((parseFloat(r.marks)/ex.maxMarks)*100).toFixed(1)+'%' : '—';
+    const grade = marks!=='—' ? calcGrade((parseFloat(marks)/ex.maxMarks)*100) : '—';
+    return `<tr>
+      <td>${ex.name}</td><td><span class="subject-pill">${ex.subject||'—'}</span></td>
+      <td>${ex.date||'—'}</td><td>${marks}/${ex.maxMarks}</td>
+      <td>${pct}</td><td>${grade!=='—'?gradeBadge(grade):'—'}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="6" class="text-center text-muted py-3">No exams recorded yet</td></tr>';
+
+  const asgnRows = assignments.map(a => {
+    const sub = a.submissions && a.submissions[id];
+    return `<tr>
+      <td>${a.title}</td><td><span class="subject-pill">${a.subject||'—'}</span></td>
+      <td>${a.dueDate||'—'}</td>
+      <td>${sub && sub.submitted ? '<span class="badge bg-success">Submitted</span>' : '<span class="badge bg-secondary">Pending</span>'}</td>
+      <td>${sub && sub.marks!==undefined && sub.marks!=='' ? sub.marks+'/'+a.maxMarks : '—'}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="5" class="text-center text-muted py-3">No assignments yet</td></tr>';
+
+  const testRows = tests.map(t => {
+    const r = t.results && t.results[id];
+    const marks = r && r.marks!=='AB' && r.marks!=='' ? r.marks : (r&&r.absent?'AB':'—');
+    const pct = marks!=='—'&&marks!=='AB' ? ((parseFloat(marks)/t.maxMarks)*100).toFixed(1)+'%' : marks==='AB'?'AB':'—';
+    const chTag = t.chapterId ? `<span class="badge" style="background:#ede9fe;color:#5b21b6;font-size:11px">${t.chapterId}</span>` : '—';
+    return `<tr>
+      <td>${t.title}</td><td>${chTag}</td>
+      <td>${t.date||'—'}</td><td>${marks!=='—'&&marks!=='AB'?marks+'/'+t.maxMarks:marks}</td><td>${pct}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="5" class="text-center text-muted py-3">No tests recorded yet</td></tr>';
+
+  document.getElementById('student-detail-content').innerHTML = `
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <div class="card-box">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="avatar" style="width:56px;height:56px;font-size:22px">${s.name[0]}</div>
+            <div>
+              <h5 class="mb-0 fw-bold">${s.name}</h5>
+              <div style="font-size:12px;color:#64748b">Adm No: ${s.admNo} · Class XII Humanities</div>
+            </div>
+          </div>
+          <hr>
+          <h6 class="fw-bold mb-2" style="color:var(--primary)">Class XI Baseline (Pol. Science)</h6>
+          <table class="table table-sm mb-0">
+            <tr><td style="font-size:12px">Mid Term 1</td><td class="text-end">${s.xi.mt1Marks}/100 (${s.xi.mt1Pct}%) ${gradeBadge(s.xi.mt1Grade)}</td></tr>
+            <tr><td style="font-size:12px">Annual</td><td class="text-end">${s.xi.annMarks}/120 (${s.xi.annPct}%) ${gradeBadge(s.xi.annGrade)}</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="col-md-8">
+        <div class="card-box">
+          <h6 class="fw-bold mb-2" style="color:var(--primary)">XII vs XI Performance</h6>
+          <div style="height:220px"><canvas id="studentChart_${id}"></canvas></div>
+        </div>
+      </div>
+    </div>
+    <ul class="nav nav-tabs mb-3" id="studentTabs_${id}">
+      <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#st-mastery-${id}"><i class="fas fa-book me-1"></i>Chapter Mastery</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#st-exams-${id}"><i class="fas fa-file-alt me-1"></i>Exams</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#st-asgn-${id}"><i class="fas fa-tasks me-1"></i>Assignments</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#st-tests-${id}"><i class="fas fa-pencil-alt me-1"></i>Tests</a></li>
+    </ul>
+    <div class="tab-content">
+      <div class="tab-pane fade show active" id="st-mastery-${id}">
+        ${buildStudentMasteryHTML(id)}
+      </div>
+      <div class="tab-pane fade" id="st-exams-${id}">
+        <div class="card-box p-0 overflow-auto">
+          <table class="table results-table mb-0"><thead><tr><th>Exam</th><th>Subject</th><th>Date</th><th>Marks</th><th>%</th><th>Grade</th></tr></thead>
+          <tbody>${examRows}</tbody></table>
+        </div>
+      </div>
+      <div class="tab-pane fade" id="st-asgn-${id}">
+        <div class="card-box p-0 overflow-auto">
+          <table class="table results-table mb-0"><thead><tr><th>Assignment</th><th>Subject</th><th>Due Date</th><th>Status</th><th>Marks</th></tr></thead>
+          <tbody>${asgnRows}</tbody></table>
+        </div>
+      </div>
+      <div class="tab-pane fade" id="st-tests-${id}">
+        <div class="card-box p-0 overflow-auto">
+          <table class="table results-table mb-0"><thead><tr><th>Test</th><th>Chapter</th><th>Date</th><th>Marks</th><th>%</th></tr></thead>
+          <tbody>${testRows}</tbody></table>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById('students-list-view').style.display='none';
+  document.getElementById('student-detail-view').style.display='';
+
+  // Student chart
+  setTimeout(() => {
+    const xiiPcts = exams.map(ex => {
+      const r = ex.results && ex.results[id];
+      return r && r.marks!=='' ? (parseFloat(r.marks)/ex.maxMarks)*100 : null;
+    }).filter(v=>v!==null);
+    const ctx = document.getElementById('studentChart_'+id)?.getContext('2d');
+    if(!ctx) return;
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: exams.filter((ex,i) => {
+          const r = ex.results && ex.results[id];
+          return r && r.marks!=='';
+        }).map(ex=>ex.name).concat(['XI Annual']),
+        datasets: [
+          { label: 'XII Exams %', data: xiiPcts.concat([s.xi.annPct]),
+            borderColor: '#3b82f6', backgroundColor: '#3b82f633', tension: 0.3, pointRadius: 5, fill: true },
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: { y: { beginAtZero: true, max: 100, ticks: { callback: v=>v+'%' } } }
+      }
+    });
+  }, 100);
+}
+
+function calcGrade(pct) {
+  if(pct>=91) return 'A1';
+  if(pct>=81) return 'A2';
+  if(pct>=71) return 'B1';
+  if(pct>=61) return 'B2';
+  if(pct>=51) return 'C1';
+  if(pct>=41) return 'C2';
+  if(pct>=33) return 'D';
+  return 'E';
+}
+
+// ===================== EXAMS =====================
+function openExamModal(editId) {
+  document.getElementById('exam-name').value='';
+  document.getElementById('exam-subject').value='';
+  document.getElementById('exam-date').value='';
+  document.getElementById('exam-maxmarks').value='100';
+  populateSubjectDropdowns();
+
+  const students = getStudents();
+  document.getElementById('exam-marks-table').innerHTML = `
+    <table class="table table-sm results-table">
+      <thead><tr><th>#</th><th>Adm No</th><th>Student Name</th><th>Marks Obtained</th><th>Remarks</th></tr></thead>
+      <tbody>
+        ${students.map(s => `<tr>
+          <td>${s.id}</td><td>${s.admNo}</td><td><strong>${s.name}</strong></td>
+          <td><input type="number" class="form-control form-control-sm" id="exam-marks-${s.id}" min="0" placeholder="0" style="width:90px"></td>
+          <td><input type="text" class="form-control form-control-sm" id="exam-rem-${s.id}" placeholder="Optional"></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+
+  document.getElementById('examModal')._editId = editId || null;
+  new bootstrap.Modal(document.getElementById('examModal')).show();
+}
+
+function saveExam() {
+  const name = document.getElementById('exam-name').value.trim();
+  const subject = document.getElementById('exam-subject').value;
+  const date = document.getElementById('exam-date').value;
+  const maxMarks = parseFloat(document.getElementById('exam-maxmarks').value) || 100;
+
+  if(!name) { alert('Please enter exam name'); return; }
+
+  const students = getStudents();
+  const results = {};
+  students.forEach(s => {
+    const m = document.getElementById('exam-marks-'+s.id)?.value;
+    const rem = document.getElementById('exam-rem-'+s.id)?.value||'';
+    results[s.id] = { marks: m!=='' && m!==undefined ? parseFloat(m) : '', remarks: rem };
+  });
+
+  const exams = getExams();
+  exams.push({ id: Date.now(), name, subject, date, maxMarks, results, createdAt: new Date().toISOString() });
+  ss('xii_exams', exams);
+
+  bootstrap.Modal.getInstance(document.getElementById('examModal')).hide();
+  renderExams();
+  updateStatExams();
+}
+
+function updateStatExams() {
+  document.getElementById('stat-exams').textContent = getExams().length;
+}
+
+function renderExams() {
+  const exams = getExams();
+  if(!exams.length) {
+    document.getElementById('exam-list').innerHTML = `<div class="text-center py-5 text-muted"><i class="fas fa-file-alt fa-3x mb-3 d-block" style="opacity:0.3"></i>No exams recorded yet.<br><button class="btn btn-sm btn-primary-custom mt-3" onclick="openExamModal()">Add First Exam</button></div>`;
+    return;
+  }
+  const subjects = [...new Set(exams.map(e=>e.subject).filter(Boolean))];
+  const tabs = subjects.length > 1 ?
+    `<ul class="nav nav-tabs mb-3">${subjects.map((s,i)=>`<li class="nav-item"><a class="nav-link ${i===0?'active':''}" data-bs-toggle="tab" href="#exam-sub-${i}">${s}</a></li>`).join('')}<li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#exam-sub-all">All</a></li></ul>
+     <div class="tab-content">${subjects.map((s,i)=>
+       `<div class="tab-pane fade ${i===0?'show active':''}" id="exam-sub-${i}">${renderExamGroup(exams.filter(e=>e.subject===s))}</div>`
+     ).join('')}<div class="tab-pane fade" id="exam-sub-all">${renderExamGroup(exams)}</div></div>` :
+    renderExamGroup(exams);
+  document.getElementById('exam-list').innerHTML = tabs;
+}
+
+function renderExamGroup(exams) {
+  return exams.map(ex => {
+    const students = getStudents();
+    const scores = students.map(s => ex.results && ex.results[s.id] && ex.results[s.id].marks!=='' ? parseFloat(ex.results[s.id].marks) : null).filter(v=>v!==null);
+    const avg = scores.length ? (scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1) : '—';
+    const highest = scores.length ? Math.max(...scores) : '—';
+    const lowest = scores.length ? Math.min(...scores) : '—';
+    const submitted = scores.length;
+    return `
+      <div class="card-box mb-3">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <div>
+            <h6 class="fw-bold mb-1">${ex.name} ${ex.subject?`<span class="subject-pill ms-2">${ex.subject}</span>`:''}</h6>
+            <div style="font-size:12px;color:#64748b">${ex.date||'Date not set'} · Max Marks: ${ex.maxMarks}</div>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-primary" onclick="viewExam(${ex.id})"><i class="fas fa-eye me-1"></i>View</button>
+            <button class="btn btn-sm btn-outline-danger" onclick="deleteExam(${ex.id})"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+        <div class="row g-2">
+          <div class="col-3"><div class="text-center p-2 rounded" style="background:#f0f9ff"><div class="fw-bold" style="color:#0284c7">${submitted}/20</div><div style="font-size:11px;color:#64748b">Submitted</div></div></div>
+          <div class="col-3"><div class="text-center p-2 rounded" style="background:#f0fdf4"><div class="fw-bold" style="color:#16a34a">${avg}</div><div style="font-size:11px;color:#64748b">Class Avg</div></div></div>
+          <div class="col-3"><div class="text-center p-2 rounded" style="background:#fff7ed"><div class="fw-bold" style="color:#ea580c">${highest}</div><div style="font-size:11px;color:#64748b">Highest</div></div></div>
+          <div class="col-3"><div class="text-center p-2 rounded" style="background:#fef2f2"><div class="fw-bold" style="color:#dc2626">${lowest}</div><div style="font-size:11px;color:#64748b">Lowest</div></div></div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function viewExam(id) {
+  const ex = getExams().find(e=>e.id===id);
+  if(!ex) return;
+  const students = getStudents();
+  const rows = students.map(s => {
+    const r = ex.results && ex.results[s.id];
+    const marks = r && r.marks!=='' ? r.marks : '—';
+    const pct = marks!=='—' ? ((parseFloat(marks)/ex.maxMarks)*100).toFixed(1)+'%' : '—';
+    const grade = marks!=='—' ? calcGrade((parseFloat(marks)/ex.maxMarks)*100) : '—';
+    const bg = marks!=='—' && (parseFloat(marks)/ex.maxMarks)*100 < 33 ? 'style="background:#fef2f2"' : '';
+    return `<tr ${bg}><td>${s.id}</td><td>${s.admNo}</td><td>${s.name}</td><td>${marks}/${ex.maxMarks}</td><td>${pct}</td><td>${grade!=='—'?gradeBadge(grade):'—'}</td><td style="font-size:12px;color:#64748b">${r&&r.remarks||''}</td></tr>`;
+  }).join('');
+  document.getElementById('viewExamTitle').textContent = ex.name + (ex.subject?' — '+ex.subject:'');
+  document.getElementById('viewExamBody').innerHTML = `
+    <table class="table results-table">
+      <thead><tr><th>#</th><th>Adm No</th><th>Student</th><th>Marks</th><th>%</th><th>Grade</th><th>Remarks</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  new bootstrap.Modal(document.getElementById('viewExamModal')).show();
+}
+
+function deleteExam(id) {
+  if(!confirm('Delete this exam?')) return;
+  ss('xii_exams', getExams().filter(e=>e.id!==id));
+  renderExams();
+}
+
+// ===================== ASSIGNMENTS =====================
+function openAssignmentModal() {
+  ['asgn-title','asgn-desc','asgn-topics'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('asgn-subject').value='';
+  document.getElementById('asgn-due').value='';
+  document.getElementById('asgn-marks').value='10';
+  populateSubjectDropdowns();
+
+  const students = getStudents();
+  document.getElementById('asgn-submission-table').innerHTML = `
+    <table class="table table-sm results-table">
+      <thead><tr><th>Student</th><th>Submitted</th><th>Marks Obtained</th></tr></thead>
+      <tbody>${students.map(s=>`<tr>
+        <td><strong>${s.name}</strong></td>
+        <td><input type="checkbox" class="form-check-input" id="asgn-sub-${s.id}"></td>
+        <td><input type="number" class="form-control form-control-sm" id="asgn-m-${s.id}" min="0" placeholder="—" style="width:80px"></td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  new bootstrap.Modal(document.getElementById('assignmentModal')).show();
+}
+
+function saveAssignment() {
+  const title = document.getElementById('asgn-title').value.trim();
+  if(!title) { alert('Please enter a title'); return; }
+  const students = getStudents();
+  const submissions = {};
+  students.forEach(s => {
+    const submitted = document.getElementById('asgn-sub-'+s.id)?.checked;
+    const marks = document.getElementById('asgn-m-'+s.id)?.value;
+    submissions[s.id] = { submitted, marks: marks!==''?parseFloat(marks):'' };
+  });
+  const a = {
+    id: Date.now(), title,
+    subject: document.getElementById('asgn-subject').value,
+    dueDate: document.getElementById('asgn-due').value,
+    maxMarks: parseFloat(document.getElementById('asgn-marks').value)||10,
+    description: document.getElementById('asgn-desc').value,
+    topics: document.getElementById('asgn-topics').value,
+    submissions, createdAt: new Date().toISOString()
+  };
+  const assignments = getAssignments();
+  assignments.push(a);
+  ss('xii_assignments', assignments);
+  bootstrap.Modal.getInstance(document.getElementById('assignmentModal')).hide();
+  renderAssignments();
+}
+
+function renderAssignments() {
+  const assignments = getAssignments();
+  if(!assignments.length) {
+    document.getElementById('assignment-list').innerHTML = `<div class="text-center py-5 text-muted"><i class="fas fa-tasks fa-3x mb-3 d-block" style="opacity:0.3"></i>No assignments yet.<br><button class="btn btn-sm btn-primary-custom mt-3" onclick="openAssignmentModal()">Create First Assignment</button></div>`;
+    return;
+  }
+  document.getElementById('assignment-list').innerHTML = assignments.map(a => {
+    const subs = Object.values(a.submissions||{});
+    const submitted = subs.filter(s=>s.submitted).length;
+    const due = a.dueDate ? new Date(a.dueDate) : null;
+    const overdue = due && due < new Date();
+    return `<div class="card-box mb-3">
+      <div class="d-flex justify-content-between align-items-start mb-2">
+        <div>
+          <h6 class="fw-bold mb-1">${a.title} ${a.subject?`<span class="subject-pill ms-2">${a.subject}</span>`:''}</h6>
+          <div style="font-size:12px;color:#64748b">Due: ${a.dueDate||'Not set'} · Max: ${a.maxMarks} marks${overdue?' <span class="badge bg-danger ms-1">Overdue</span>':''}</div>
+          ${a.topics?`<div style="font-size:11px;color:#94a3b8;margin-top:2px">Topics: ${a.topics}</div>`:''}
+          ${a.description?`<div style="font-size:12px;margin-top:4px;color:#475569">${a.description.substring(0,120)}${a.description.length>120?'...':''}</div>`:''}
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-sm btn-outline-primary" onclick="viewAssignment(${a.id})"><i class="fas fa-eye me-1"></i>View</button>
+          <button class="btn btn-sm btn-outline-danger" onclick="deleteAssignment(${a.id})"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-3">
+        <div style="font-size:12px"><span class="fw-bold" style="color:#10b981">${submitted}</span><span style="color:#64748b">/20 submitted</span></div>
+        <div class="flex-grow-1 progress-bar-custom"><div class="progress-fill" style="width:${(submitted/20)*100}%;background:#10b981"></div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function viewAssignment(id) {
+  const a = getAssignments().find(x=>x.id===id);
+  if(!a) return;
+  const students = getStudents();
+  const rows = students.map(s => {
+    const sub = a.submissions && a.submissions[s.id];
+    return `<tr>
+      <td>${s.admNo}</td><td>${s.name}</td>
+      <td>${sub&&sub.submitted?'<span class="badge bg-success">Yes</span>':'<span class="badge bg-secondary">No</span>'}</td>
+      <td>${sub&&sub.marks!==''&&sub.marks!==undefined?sub.marks+'/'+a.maxMarks:'—'}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('viewAsgnTitle').textContent = a.title;
+  document.getElementById('viewAsgnBody').innerHTML = `
+    ${a.description?`<div class="alert-needs mb-3">${a.description}</div>`:''}
+    ${a.topics?`<div class="mb-3" style="font-size:13px"><strong>Topics:</strong> ${a.topics}</div>`:''}
+    <table class="table results-table">
+      <thead><tr><th>Adm No</th><th>Student</th><th>Submitted</th><th>Marks</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  new bootstrap.Modal(document.getElementById('viewAssignmentModal')).show();
+}
+
+function deleteAssignment(id) {
+  if(!confirm('Delete this assignment?')) return;
+  ss('xii_assignments', getAssignments().filter(a=>a.id!==id));
+  renderAssignments();
+}
+
+// ===================== TESTS =====================
+function openTestModal() {
+  ['test-title','test-topics'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('test-subject').value='';
+  document.getElementById('test-chapter').value='';
+  document.getElementById('test-date').value='';
+  document.getElementById('test-maxmarks').value='25';
+  populateSubjectDropdowns();
+
+  const students = getStudents();
+  document.getElementById('test-marks-table').innerHTML = `
+    <table class="table table-sm results-table">
+      <thead><tr><th>#</th><th>Adm No</th><th>Student</th><th>Marks</th><th>Absent</th></tr></thead>
+      <tbody>${students.map(s=>`<tr>
+        <td>${s.id}</td><td>${s.admNo}</td><td>${s.name}</td>
+        <td><input type="number" class="form-control form-control-sm" id="test-m-${s.id}" min="0" placeholder="0" style="width:90px"></td>
+        <td><input type="checkbox" class="form-check-input" id="test-ab-${s.id}"></td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  new bootstrap.Modal(document.getElementById('testModal')).show();
+}
+
+function saveTest() {
+  const title = document.getElementById('test-title').value.trim();
+  if(!title) { alert('Please enter test title'); return; }
+  const students = getStudents();
+  const results = {};
+  students.forEach(s => {
+    const m = document.getElementById('test-m-'+s.id)?.value;
+    const absent = document.getElementById('test-ab-'+s.id)?.checked;
+    results[s.id] = { marks: absent ? 'AB' : (m!=='' ? parseFloat(m) : ''), absent };
+  });
+  const chapterId = document.getElementById('test-chapter').value;
+  const chapter = chapterId ? ALL_CHAPTERS.find(c=>c.id===chapterId) : null;
+  const t = {
+    id: Date.now(), title,
+    subject: document.getElementById('test-subject').value,
+    chapterId, chapterName: chapter ? chapter.name : '',
+    date: document.getElementById('test-date').value,
+    maxMarks: parseFloat(document.getElementById('test-maxmarks').value)||25,
+    topics: document.getElementById('test-topics').value,
+    results, createdAt: new Date().toISOString()
+  };
+  const tests = getTests();
+  tests.push(t);
+  ss('xii_tests', tests);
+  bootstrap.Modal.getInstance(document.getElementById('testModal')).hide();
+  renderTests();
+}
+
+function renderTests() {
+  const tests = getTests();
+  if(!tests.length) {
+    document.getElementById('test-list').innerHTML = `<div class="text-center py-5 text-muted"><i class="fas fa-pencil-alt fa-3x mb-3 d-block" style="opacity:0.3"></i>No class tests yet.<br><button class="btn btn-sm btn-primary-custom mt-3" onclick="openTestModal()">Create First Test</button></div>`;
+    return;
+  }
+  document.getElementById('test-list').innerHTML = tests.map(t => {
+    const students = getStudents();
+    const scores = students.map(s => {
+      const r = t.results && t.results[s.id];
+      return r && !r.absent && r.marks!=='' ? parseFloat(r.marks) : null;
+    }).filter(v=>v!==null);
+    const avg = scores.length ? (scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1) : '—';
+    const highest = scores.length ? Math.max(...scores) : '—';
+    return `<div class="card-box mb-3">
+      <div class="d-flex justify-content-between align-items-start mb-2">
+        <div>
+          <h6 class="fw-bold mb-1">${t.title} ${t.subject?`<span class="subject-pill ms-2">${t.subject}</span>`:''} ${t.chapterId?`<span class="badge ms-1" style="background:#ede9fe;color:#5b21b6;font-size:11px">${t.chapterId}: ${t.chapterName}</span>`:''}</h6>
+          <div style="font-size:12px;color:#64748b">${t.date||'Date not set'} · Max: ${t.maxMarks} marks</div>
+          ${t.topics?`<div style="font-size:11px;color:#94a3b8">Topics: ${t.topics}</div>`:''}
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-sm btn-outline-primary" onclick="viewTest(${t.id})"><i class="fas fa-eye me-1"></i>View</button>
+          <button class="btn btn-sm btn-outline-danger" onclick="deleteTest(${t.id})"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+      <div class="row g-2">
+        <div class="col-4"><div class="text-center p-2 rounded" style="background:#f0fdf4"><div class="fw-bold" style="color:#16a34a">${avg}/${t.maxMarks}</div><div style="font-size:11px">Class Avg</div></div></div>
+        <div class="col-4"><div class="text-center p-2 rounded" style="background:#fff7ed"><div class="fw-bold" style="color:#ea580c">${highest}</div><div style="font-size:11px">Highest</div></div></div>
+        <div class="col-4"><div class="text-center p-2 rounded" style="background:#f0f9ff"><div class="fw-bold" style="color:#0284c7">${scores.length}/20</div><div style="font-size:11px">Appeared</div></div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function viewTest(id) {
+  const t = getTests().find(x=>x.id===id);
+  if(!t) return;
+  const students = getStudents();
+  const rows = students.map(s => {
+    const r = t.results && t.results[s.id];
+    const marks = r && r.absent ? 'AB' : (r && r.marks!=='' ? r.marks : '—');
+    const pct = marks!=='—' && marks!=='AB' ? ((parseFloat(marks)/t.maxMarks)*100).toFixed(1)+'%' : marks==='AB'?'AB':'—';
+    return `<tr><td>${s.admNo}</td><td>${s.name}</td><td>${marks}${marks!=='AB'&&marks!=='—'?'/'+t.maxMarks:''}</td><td>${pct}</td></tr>`;
+  }).join('');
+  document.getElementById('viewExamTitle').textContent = t.title + (t.subject?' — '+t.subject:'');
+  document.getElementById('viewExamBody').innerHTML = `
+    ${t.topics?`<div class="alert-needs mb-3"><strong>Topics:</strong> ${t.topics}</div>`:''}
+    <table class="table results-table">
+      <thead><tr><th>Adm No</th><th>Student</th><th>Marks</th><th>%</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  new bootstrap.Modal(document.getElementById('viewExamModal')).show();
+}
+
+function deleteTest(id) {
+  if(!confirm('Delete this test?')) return;
+  ss('xii_tests', getTests().filter(t=>t.id!==id));
+  renderTests();
+}
+
+// ===================== SYLLABUS =====================
+function openSyllabusModal() {
+  ['syl-title','syl-desc'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('syl-subject').value='';
+  document.getElementById('syl-type').value='chapter';
+  document.getElementById('syl-covered').checked=false;
+  populateSubjectDropdowns();
+  new bootstrap.Modal(document.getElementById('syllabusModal')).show();
+}
+
+function saveSyllabus() {
+  const subject = document.getElementById('syl-subject').value;
+  const title = document.getElementById('syl-title').value.trim();
+  if(!subject||!title) { alert('Subject and title required'); return; }
+  const item = {
+    id: Date.now(), subject, title,
+    type: document.getElementById('syl-type').value,
+    description: document.getElementById('syl-desc').value,
+    covered: document.getElementById('syl-covered').checked,
+    createdAt: new Date().toISOString()
+  };
+  const syl = getSyllabus();
+  syl.push(item);
+  ss('xii_syllabus', syl);
+  bootstrap.Modal.getInstance(document.getElementById('syllabusModal')).hide();
+  renderSyllabus();
+}
+
+function toggleCovered(id) {
+  const syl = getSyllabus();
+  const item = syl.find(s=>s.id===id);
+  if(item) { item.covered = !item.covered; ss('xii_syllabus', syl); renderSyllabus(); }
+}
+
+function deleteSyllabus(id) {
+  if(!confirm('Remove this resource?')) return;
+  ss('xii_syllabus', getSyllabus().filter(s=>s.id!==id));
+  renderSyllabus();
+}
+
+function renderSyllabus() {
+  const syl = getSyllabus();
+  const subjects = getSubjects();
+  const typeIcon = {chapter:'fa-bookmark',book:'fa-book',worksheet:'fa-file-alt',note:'fa-sticky-note'};
+  const typeLabel = {chapter:'Chapter/Topic',book:'Textbook',worksheet:'Worksheet',note:'Note'};
+
+  if(!syl.length) {
+    document.getElementById('syllabus-by-subject').innerHTML = `
+      <div class="text-center py-5 text-muted">
+        <i class="fas fa-book-open fa-3x mb-3 d-block" style="opacity:0.3"></i>
+        No resources added yet.<br>
+        <small>Add chapters, worksheets, and book references to track your Class XII syllabus coverage.</small><br>
+        <button class="btn btn-sm btn-primary-custom mt-3" onclick="openSyllabusModal()">Add First Resource</button>
+      </div>`;
+    return;
+  }
+
+  const bySub = {};
+  subjects.forEach(s => bySub[s]=[]);
+  syl.forEach(item => { if(bySub[item.subject]) bySub[item.subject].push(item); });
+
+  document.getElementById('syllabus-by-subject').innerHTML = subjects.filter(s=>bySub[s].length>0).map(sub => {
+    const items = bySub[sub];
+    const covered = items.filter(i=>i.covered).length;
+    return `<div class="card-box mb-3">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0" style="color:var(--primary)">${sub}</h6>
+        <div style="font-size:12px;color:#64748b">${covered}/${items.length} covered</div>
+      </div>
+      <div class="progress-bar-custom mb-3"><div class="progress-fill" style="width:${items.length?(covered/items.length)*100:0}%;background:#10b981"></div></div>
+      ${items.map(item=>`
+        <div class="syllabus-item ${item.covered?'':'opacity-75'} d-flex justify-content-between align-items-start">
+          <div>
+            <span class="fw-semibold" style="font-size:13px"><i class="fas ${typeIcon[item.type]||'fa-file'} me-2" style="color:var(--accent)"></i>${item.title}</span>
+            <span style="font-size:11px;color:#94a3b8;margin-left:8px">[${typeLabel[item.type]||item.type}]</span>
+            ${item.covered?'<span class="badge bg-success ms-2" style="font-size:10px">Covered</span>':''}
+            ${item.description?`<div style="font-size:12px;color:#475569;margin-top:3px">${item.description.substring(0,120)}${item.description.length>120?'...':''}</div>`:''}
+          </div>
+          <div class="d-flex gap-2 ms-3">
+            <button class="btn btn-sm ${item.covered?'btn-outline-secondary':'btn-outline-success'}" onclick="toggleCovered(${item.id})" title="${item.covered?'Mark not covered':'Mark covered'}">
+              <i class="fas ${item.covered?'fa-times':'fa-check'}"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-danger" onclick="deleteSyllabus(${item.id})"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>`).join('')}
+    </div>`;
+  }).join('') || `<div class="text-center py-3 text-muted">No resources added yet. Click "Add Resource" to start.</div>`;
+}
+
+// ===================== ANALYTICS =====================
+let trendChartInst, subjectChartInst, compareChartInst;
+
+function renderAnalytics() {
+  const exams = getExams();
+  const students = getStudents();
+
+  // Trend chart
+  if(trendChartInst) trendChartInst.destroy();
+  const ctx1 = document.getElementById('trendChart').getContext('2d');
+  if(exams.length) {
+    const examAvgs = exams.map(ex => {
+      const scores = students.map(s => ex.results && ex.results[s.id] && ex.results[s.id].marks!=='' ? (parseFloat(ex.results[s.id].marks)/ex.maxMarks)*100 : null).filter(v=>v!==null);
+      return scores.length ? scores.reduce((a,b)=>a+b,0)/scores.length : null;
+    });
+    trendChartInst = new Chart(ctx1, {
+      type: 'line',
+      data: {
+        labels: exams.map(e=>e.name),
+        datasets: [{ label:'Class Avg %', data:examAvgs, borderColor:'#3b82f6', backgroundColor:'#3b82f633', tension:0.3, fill:true, pointRadius:6 }]
+      },
+      options: { responsive:true, maintainAspectRatio:false, scales:{y:{beginAtZero:true,max:100,ticks:{callback:v=>v+'%'}}} }
+    });
+  } else {
+    trendChartInst = new Chart(ctx1, {
+      type:'line', data:{labels:[],datasets:[]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{title:{display:true,text:'No exam data yet'}}}
+    });
+  }
+
+  // Subject-wise chart
+  if(subjectChartInst) subjectChartInst.destroy();
+  const ctx2 = document.getElementById('subjectChart').getContext('2d');
+  const subAvgs = {};
+  exams.forEach(ex => {
+    if(!ex.subject) return;
+    const scores = students.map(s=>ex.results&&ex.results[s.id]&&ex.results[s.id].marks!==''?(parseFloat(ex.results[s.id].marks)/ex.maxMarks)*100:null).filter(v=>v!==null);
+    if(!scores.length) return;
+    const avg = scores.reduce((a,b)=>a+b,0)/scores.length;
+    if(!subAvgs[ex.subject]) subAvgs[ex.subject]={total:0,count:0};
+    subAvgs[ex.subject].total+=avg; subAvgs[ex.subject].count++;
+  });
+  const subLabels = Object.keys(subAvgs);
+  const subData = subLabels.map(s=>(subAvgs[s].total/subAvgs[s].count).toFixed(1));
+  subjectChartInst = new Chart(ctx2, {
+    type:'bar', data:{ labels:subLabels, datasets:[{label:'Avg %',data:subData,backgroundColor:'#3b82f699',borderColor:'#3b82f6',borderWidth:1,borderRadius:4}] },
+    options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true,max:100,ticks:{callback:v=>v+'%'}}},plugins:{legend:{display:false}}}
+  });
+
+  // Compare chart (XI vs XII for Pol Science)
+  if(compareChartInst) compareChartInst.destroy();
+  const ctx3 = document.getElementById('compareChart').getContext('2d');
+  const polExams = exams.filter(e=>e.subject==='Political Science');
+  const xiData = students.map(s=>s.xi.annPct);
+  const xiiData = polExams.length ? students.map(s=>{
+    const scores = polExams.map(ex=>ex.results&&ex.results[s.id]&&ex.results[s.id].marks!==''?(parseFloat(ex.results[s.id].marks)/ex.maxMarks)*100:null).filter(v=>v!==null);
+    return scores.length ? (scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1) : null;
+  }) : [];
+  compareChartInst = new Chart(ctx3, {
+    type:'bar', data:{
+      labels:students.map(s=>s.name.split(' ')[0]),
+      datasets:[
+        {label:'XI Annual %',data:xiData,backgroundColor:'#94a3b899',borderColor:'#94a3b8',borderWidth:1,borderRadius:4},
+        ...(xiiData.length?[{label:'XII Avg %',data:xiiData,backgroundColor:'#3b82f699',borderColor:'#3b82f6',borderWidth:1,borderRadius:4}]:[])
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true,max:100,ticks:{callback:v=>v+'%'}}}}
+  });
+}
+
+// ===================== AUTH =====================
+const DEFAULT_PW = 'Sheenlove.1';
+function getTeacherPW()  { return ls('xii_teacher_pw', DEFAULT_PW); }
+function getSession()    { try { return JSON.parse(sessionStorage.getItem('xii_session')||'null'); } catch(e){return null;} }
+function setSession(d)   { sessionStorage.setItem('xii_session', JSON.stringify(d)); }
+function clearSession()  { sessionStorage.removeItem('xii_session'); }
+function isTeacher()     { const s=getSession(); return s && s.role==='teacher'; }
+function getStudentSid() { const s=getSession(); return s&&s.role==='student' ? s.sid : null; }
+
+function switchLoginTab(tab) {
+  document.getElementById('login-teacher').style.display = tab==='teacher' ? '' : 'none';
+  document.getElementById('login-student').style.display = tab==='student' ? '' : 'none';
+  document.getElementById('tab-teacher').classList.toggle('active', tab==='teacher');
+  document.getElementById('tab-student').classList.toggle('active', tab==='student');
+  document.getElementById('login-error').style.display='none';
+}
+
+function loginTeacher() {
+  const pw = document.getElementById('teacher-pw').value;
+  if(pw === getTeacherPW()) {
+    setSession({role:'teacher'});
+    document.getElementById('login-overlay').style.display='none';
+    document.getElementById('role-badge').textContent='Teacher';
+    populateSubjectDropdowns();
+    renderDashboard();
+  } else {
+    showLoginError('Incorrect password. Try again.');
+  }
+}
+
+function loginStudent() {
+  const sid = parseInt(document.getElementById('student-login-select').value);
+  const pin = document.getElementById('student-pin').value.trim();
+  const s = getStudents().find(x=>x.id===sid);
+  if(!s) { showLoginError('Please select your name.'); return; }
+  const expectedPin = s.admNo.slice(-4);
+  if(pin !== expectedPin) { showLoginError('Incorrect PIN. Use last 4 digits of your Admission No.'); return; }
+  setSession({role:'student', sid, name:s.name});
+  document.getElementById('login-overlay').style.display='none';
+  document.getElementById('role-badge').textContent=s.name;
+  showStudentOnlyView(sid);
+}
+
+function showLoginError(msg) {
+  const el=document.getElementById('login-error');
+  el.textContent=msg; el.style.display='block';
+}
+
+function doLogout() {
+  clearSession();
+  document.getElementById('teacher-pw').value='';
+  document.getElementById('student-pin').value='';
+  document.getElementById('login-error').style.display='none';
+  document.getElementById('login-overlay').style.display='flex';
+}
+
+function showStudentOnlyView(sid) {
+  // Hide teacher-only sidebar items
+  ['page-exams','page-assignments','page-tests','page-syllabus','page-analytics','page-attendance','page-diary','page-reports','page-settings'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.style.display='none';
+  });
+  // Show student dashboard directly
+  document.querySelectorAll('#sidebar nav a').forEach(a=>a.style.display='none');
+  document.getElementById('page-students').style.display='';
+  showStudentDetail(sid);
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-students').classList.add('active');
+  document.getElementById('page-title').innerHTML='<i class="fas fa-user me-2" style="color:var(--accent)"></i>My Progress';
+}
+
+function changePassword() {
+  const cur=document.getElementById('pw-current').value;
+  const nw=document.getElementById('pw-new').value;
+  const cf=document.getElementById('pw-confirm').value;
+  const msg=document.getElementById('pw-msg');
+  if(cur!==getTeacherPW()){ msg.style.color='#ef4444'; msg.textContent='Current password incorrect.'; return; }
+  if(nw.length<6){ msg.style.color='#ef4444'; msg.textContent='New password must be at least 6 characters.'; return; }
+  if(nw!==cf){ msg.style.color='#ef4444'; msg.textContent='Passwords do not match.'; return; }
+  ss('xii_teacher_pw',nw);
+  msg.style.color='#10b981'; msg.textContent='Password updated successfully!';
+  ['pw-current','pw-new','pw-confirm'].forEach(id=>document.getElementById(id).value='');
+}
+
+// ===================== AUTO-SAVE =====================
+// NOTE: This is the only effective definition of ss() — function declarations are hoisted
+// and the last declaration wins, so this replaces the simple ss() defined earlier.
+// We call localStorage.setItem directly here to avoid any recursion.
+function ss(key,val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) { console.warn('Save error:',e); }
+  fbWrite(key, val); // also push to Firebase if connected
+  const dot=document.getElementById('autosave-dot');
+  const txt=document.getElementById('autosave-txt');
+  if(!dot||!txt) return;
+  dot.className='saving'; txt.textContent='Saving…';
+  clearTimeout(ss._t);
+  ss._t=setTimeout(()=>{ dot.className=''; txt.textContent='Saved'; },800);
+}
+
+// ===================== FIREBASE SYNC =====================
+const FB_KEYS = ['exams','tests','assignments','attendance','diary','syllabus','covered_chapters','subjects','teacher_pw'];
+window._fbDb = null;
+window._fbSyncEnabled = false;
+window._fbListenerOn = false;
+
+function fbWrite(key, val) {
+  if(!window._fbDb || !window._fbSyncEnabled) return;
+  const k = key.replace('xii_','');
+  if(!FB_KEYS.includes(k)) return;
+  window._fbDb.ref('classxii/'+k).set(val).catch(e=>console.warn('Firebase write error:',e));
+}
+
+function connectFirebase(silent) {
+  const apiKey    = (document.getElementById('fb-apikey')||{value:''}).value.trim();
+  const authDomain= (document.getElementById('fb-authdomain')||{value:''}).value.trim();
+  const databaseURL=(document.getElementById('fb-dburl')||{value:''}).value.trim();
+  const projectId = (document.getElementById('fb-projectid')||{value:''}).value.trim();
+
+  if(!silent && (!apiKey||!databaseURL||!projectId)) {
+    document.getElementById('fb-msg').innerHTML='<span style="color:#ef4444">⚠️ Please fill in all 4 config fields.</span>';
+    return;
+  }
+  const config = {apiKey,authDomain,databaseURL,projectId};
+  // delete existing app if any
+  try {
+    if(typeof firebase!=='undefined' && firebase.apps.length>0) {
+      firebase.apps[0].delete().then(()=>_initFb(config,silent)).catch(()=>_initFb(config,silent));
+      return;
+    }
+  } catch(e){}
+  _initFb(config, silent);
+}
+
+function _initFb(config, silent) {
+  try {
+    firebase.initializeApp(config);
+    window._fbDb = firebase.database();
+    window._fbSyncEnabled = true;
+    localStorage.setItem('xii_fb_config', JSON.stringify(config));
+
+    // Load latest data from cloud first
+    window._fbDb.ref('classxii').once('value').then(snap=>{
+      _applyFbData(snap.val()||{});
+      setFbStatus(true);
+      if(!silent) {
+        const m=document.getElementById('fb-msg');
+        if(m) m.innerHTML='<span style="color:#10b981">✅ Connected! Latest data loaded from cloud.</span>';
+      }
+      refreshCurrentPage();
+
+      // Real-time listener — updates this device when another device saves
+      if(!window._fbListenerOn) {
+        window._fbListenerOn = true;
+        window._fbDb.ref('classxii').on('value', snap=>{
+          if(!window._fbSyncEnabled) return;
+          _applyFbData(snap.val()||{});
+          refreshCurrentPage();
+        });
+      }
+    }).catch(e=>{
+      setFbStatus(false,'Connection failed: '+e.message);
+      if(!silent){ const m=document.getElementById('fb-msg'); if(m) m.innerHTML='<span style="color:#ef4444">❌ '+e.message+'</span>'; }
+    });
+  } catch(e) {
+    setFbStatus(false,'Init error: '+e.message);
+    if(!silent){ const m=document.getElementById('fb-msg'); if(m) m.innerHTML='<span style="color:#ef4444">❌ '+e.message+'</span>'; }
+  }
+}
+
+function _applyFbData(data) {
+  FB_KEYS.forEach(k=>{
+    if(data[k]!==undefined && data[k]!==null) {
+      try { localStorage.setItem('xii_'+k, JSON.stringify(data[k])); } catch(e){}
+    }
+  });
+}
+
+function disconnectFirebase() {
+  try { if(window._fbDb) window._fbDb.goOffline(); } catch(e){}
+  window._fbDb=null; window._fbSyncEnabled=false; window._fbListenerOn=false;
+  localStorage.removeItem('xii_fb_config');
+  setFbStatus(false,'Disconnected.');
+  const m=document.getElementById('fb-msg'); if(m) m.innerHTML='<span style="color:#64748b">Disconnected from Firebase. Data still saved locally.</span>';
+}
+
+function setFbStatus(connected, msg) {
+  const bar=document.getElementById('fb-status-bar');
+  const txt=document.getElementById('fb-status-text');
+  const mBtn=document.getElementById('fb-migrate-btn');
+  const dBtn=document.getElementById('fb-disconnect-btn');
+  if(!bar||!txt) return;
+  if(connected) {
+    bar.style.background='#d1fae5'; bar.style.color='#065f46';
+    txt.textContent='🟢 Connected — data syncs across all devices automatically';
+    if(mBtn) mBtn.style.display='';
+    if(dBtn) dBtn.style.display='';
+  } else {
+    bar.style.background='#fee2e2'; bar.style.color='#991b1b';
+    txt.textContent='🔴 '+(msg||'Not Connected — data saves to this browser only');
+    if(mBtn) mBtn.style.display='none';
+    if(dBtn) dBtn.style.display='none';
+  }
+}
+
+function migrateToFirebase() {
+  if(!window._fbDb){ alert('Connect to Firebase first.'); return; }
+  if(!confirm('This will upload ALL data from this device (exams, marks, attendance, diary, tests…) to Firebase cloud.\n\nAfter this, every device will see the same data.\n\nContinue?')) return;
+  const data={};
+  FB_KEYS.forEach(k=>{ const r=localStorage.getItem('xii_'+k); if(r){ try{data[k]=JSON.parse(r);}catch(e){} } });
+  window._fbSyncEnabled=false;
+  window._fbDb.ref('classxii').set(data).then(()=>{
+    window._fbSyncEnabled=true;
+    const m=document.getElementById('fb-msg');
+    if(m) m.innerHTML='<span style="color:#10b981">✅ All data uploaded to cloud! Open the app on any device and connect to the same Firebase project — everything will appear.</span>';
+    alert('✅ Migration successful!\n\nYour data is now in the cloud.\n\nNext steps:\n1. Open the app on your laptop\n2. Go to Settings → Firebase\n3. Enter the same config → Connect\n4. All data will appear automatically!');
+  }).catch(e=>{
+    window._fbSyncEnabled=true;
+    alert('Upload failed: '+e.message);
+  });
+}
+
+function refreshCurrentPage() {
+  const active=document.querySelector('.page.active');
+  if(!active) return;
+  const id=active.id.replace('page-','');
+  try {
+    if(id==='dashboard') renderDashboard();
+    else if(id==='exams') renderExams();
+    else if(id==='tests') renderTests();
+    else if(id==='assignments') renderAssignments();
+    else if(id==='attendance') renderAttendance();
+    else if(id==='diary') renderDiary();
+    else if(id==='syllabus'){ renderPolsciSyllabusOverview(); renderSyllabus(); }
+    else if(id==='analytics') renderAnalytics();
+    else if(id==='reports') renderReportCardList();
+    else if(id==='settings') renderSettingsPage();
+  } catch(e){ console.warn('refreshCurrentPage error:',e); }
+}
+
+// ===================== ATTENDANCE =====================
+function getAttendance(){ return ls('xii_attendance',{}); }
+
+function openAttMarkModal(){
+  document.getElementById('att-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('att-subject').value='';
+  populateSubjectDropdowns();
+  // populate grid
+  const students=getStudents();
+  const dateVal=document.getElementById('att-date').value;
+  const att=getAttendance();
+  const dayAtt=att[dateVal]||{};
+  document.getElementById('att-mark-grid').innerHTML=`
+    <table class="table table-sm">
+      <thead><tr><th>#</th><th>Student</th><th>Status</th></tr></thead>
+      <tbody>${students.map(s=>{
+        const cur=dayAtt[s.id]||'P';
+        return `<tr>
+          <td>${s.id}</td><td><strong>${s.name}</strong> <small style="color:#94a3b8">${s.admNo}</small></td>
+          <td>
+            ${['P','A','L','H'].map(st=>`<span class="att-cell att-${st} ${cur===st?'border-primary':''}" id="att-${s.id}" data-sid="${s.id}" data-cur="${cur}" onclick="cycleAtt(${s.id})" style="${cur===st?'border-color:var(--primary);border-width:2px':''}">${st}</span>`).join('')}
+          </td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`;
+  // Rebuild properly
+  document.getElementById('att-mark-grid').innerHTML=`
+    <table class="table table-sm">
+      <thead><tr><th>#</th><th>Student</th><th colspan="4">Status (click to change)</th></tr></thead>
+      <tbody>${students.map(s=>{
+        const cur=dayAtt[s.id]||'P';
+        return `<tr id="att-row-${s.id}">
+          <td>${s.id}</td><td><strong>${s.name}</strong></td>
+          <td><div class="d-flex gap-1">${['P','A','L','H'].map(st=>`
+            <span class="att-cell att-${st}" style="${cur===st?'border:2px solid #1a3c6e;transform:scale(1.1)':''}" onclick="selectAtt(${s.id},'${st}')">${st}</span>
+          `).join('')}</div></td>
+        </tr>`;
+      }).join('')}
+    </tbody></table>`;
+  window._attSelections={};
+  students.forEach(s=>{ window._attSelections[s.id]=dayAtt[s.id]||'P'; });
+  new bootstrap.Modal(document.getElementById('attModal')).show();
+}
+
+function selectAtt(sid,status){
+  window._attSelections[sid]=status;
+  const row=document.getElementById('att-row-'+sid);
+  if(!row) return;
+  row.querySelectorAll('.att-cell').forEach(el=>{
+    const st=el.textContent.trim();
+    el.style.border=st===status?'2px solid #1a3c6e':'2px solid transparent';
+    el.style.transform=st===status?'scale(1.1)':'scale(1)';
+  });
+}
+
+function markAllAtt(status){
+  getStudents().forEach(s=>selectAtt(s.id,status));
+}
+
+function saveAttendance(){
+  const date=document.getElementById('att-date').value;
+  if(!date){ alert('Please select a date'); return; }
+  const att=getAttendance();
+  if(!att[date]) att[date]={};
+  Object.entries(window._attSelections||{}).forEach(([sid,status])=>{
+    att[date][sid]=status;
+  });
+  ss('xii_attendance',att);
+  bootstrap.Modal.getInstance(document.getElementById('attModal')).hide();
+  renderAttendance();
+}
+
+function renderAttendance(){
+  const monthEl=document.getElementById('att-month');
+  const now=new Date();
+  const monthStr=monthEl.value || `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  monthEl.value=monthStr;
+  const [yr,mo]=monthStr.split('-').map(Number);
+  const daysInMonth=new Date(yr,mo,0).getDate();
+  const att=getAttendance();
+  const students=getStudents();
+
+  // Working days (Mon–Sat)
+  const workDays=[];
+  for(let d=1;d<=daysInMonth;d++){
+    const dt=new Date(yr,mo-1,d);
+    if(dt.getDay()!==0) workDays.push(d);
+  }
+
+  // Stats row
+  let totalP=0,totalA=0;
+  students.forEach(s=>{
+    workDays.forEach(d=>{
+      const key=`${monthStr}-${String(d).padStart(2,'0')}`;
+      const st=att[key]&&att[key][s.id];
+      if(st==='P'||!st) totalP++;
+      else if(st==='A') totalA++;
+    });
+  });
+  const totalCells=students.length*workDays.length;
+  document.getElementById('att-stats-row').innerHTML=`
+    <div class="col-md-3"><div class="stat-card blue"><div class="val">${workDays.length}</div><div class="lbl">Working Days</div></div></div>
+    <div class="col-md-3"><div class="stat-card green"><div class="val">${totalCells>0?((totalP/totalCells)*100).toFixed(1)+'%':'—'}</div><div class="lbl">Avg Attendance</div></div></div>
+    <div class="col-md-3"><div class="stat-card red"><div class="val">${totalA}</div><div class="lbl">Total Absences</div></div></div>
+    <div class="col-md-3"><div class="stat-card orange"><div class="val">${students.filter(s=>{
+      const p=workDays.filter(d=>{const k=`${monthStr}-${String(d).padStart(2,'0')}`;const st=att[k]&&att[k][s.id];return st==='P'||!st;}).length;
+      return workDays.length>0&&(p/workDays.length)<0.75;
+    }).length}</div><div class="lbl">Below 75%</div></div></div>`;
+
+  // Table
+  const cols=workDays.slice(0,20);// show max 20 days
+  let html=`<div class="card-box overflow-auto"><table class="table table-sm" style="font-size:11px;min-width:700px">
+    <thead><tr style="background:var(--primary);color:#fff">
+      <th style="position:sticky;left:0;background:var(--primary)">Student</th>
+      ${cols.map(d=>`<th style="text-align:center;min-width:30px">${d}</th>`).join('')}
+      <th style="text-align:center">P%</th><th style="text-align:center">P</th><th style="text-align:center">A</th>
+    </tr></thead><tbody>`;
+
+  students.forEach((s,si)=>{
+    let pCount=0,aCount=0,lCount=0;
+    const cells=cols.map(d=>{
+      const key=`${monthStr}-${String(d).padStart(2,'0')}`;
+      const status=(att[key]&&att[key][s.id])||'P';
+      if(status==='P') pCount++;
+      else if(status==='A') aCount++;
+      else if(status==='L') lCount++;
+      return `<td style="text-align:center;background:${status==='P'?'#d1fae5':status==='A'?'#fee2e2':status==='L'?'#fef3c7':'#f1f5f9'};color:${status==='P'?'#065f46':status==='A'?'#991b1b':status==='L'?'#92400e':'#94a3b8'};font-weight:700;padding:3px">${status}</td>`;
+    });
+    const total=workDays.length; const pPct=total>0?((pCount/total)*100).toFixed(0):0;
+    const bg=si%2===0?'#fff':'#f8fafc';
+    html+=`<tr style="background:${bg}">
+      <td style="position:sticky;left:0;background:${bg};font-weight:600">${s.name}</td>
+      ${cells.join('')}
+      <td style="text-align:center;font-weight:700;color:${pPct>=75?'#10b981':'#ef4444'}">${pPct}%</td>
+      <td style="text-align:center;color:#10b981;font-weight:600">${pCount}</td>
+      <td style="text-align:center;color:#ef4444;font-weight:600">${aCount}</td>
+    </tr>`;
+  });
+  html+=`</tbody></table></div>`;
+  document.getElementById('att-table-area').innerHTML=html;
+}
+
+// ===================== DIARY =====================
+function getDiary(){ return ls('xii_diary',[]); }
+
+function openDiaryModal(){
+  ['diary-date','diary-period','diary-topics','diary-hw','diary-remarks'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('diary-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('diary-subject').value='';
+  document.getElementById('diary-chapter').value='';
+  populateSubjectDropdowns();
+  new bootstrap.Modal(document.getElementById('diaryModal')).show();
+}
+
+function saveDiaryEntry(){
+  const date=document.getElementById('diary-date').value;
+  if(!date){ alert('Please select a date'); return; }
+  const chId=document.getElementById('diary-chapter').value;
+  const ch=chId?ALL_CHAPTERS.find(c=>c.id===chId):null;
+  const entry={
+    id:Date.now(), date,
+    period:document.getElementById('diary-period').value,
+    subject:document.getElementById('diary-subject').value,
+    chapterId:chId, chapterName:ch?ch.name:'',
+    topics:document.getElementById('diary-topics').value,
+    homework:document.getElementById('diary-hw').value,
+    remarks:document.getElementById('diary-remarks').value,
+    createdAt:new Date().toISOString()
+  };
+  const diary=getDiary(); diary.push(entry); ss('xii_diary',diary);
+  bootstrap.Modal.getInstance(document.getElementById('diaryModal')).hide();
+  renderDiary();
+  // auto-mark chapter as covered
+  if(chId){ const cov=getCoveredChapters(); cov[chId]=true; ss('xii_covered_chapters',cov); }
+}
+
+function renderDiary(){
+  const monthEl=document.getElementById('diary-month');
+  const now=new Date();
+  const monthStr=monthEl.value||`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  monthEl.value=monthStr;
+  const diary=getDiary().filter(e=>e.date&&e.date.startsWith(monthStr)).sort((a,b)=>a.date.localeCompare(b.date));
+  if(!diary.length){
+    document.getElementById('diary-area').innerHTML=`<div class="text-center py-5 text-muted"><i class="fas fa-journal-whills fa-2x mb-2 d-block" style="opacity:0.3"></i>No entries for this month.</div>`;
+    return;
+  }
+  // Group by date
+  const byDate={};
+  diary.forEach(e=>{ if(!byDate[e.date]) byDate[e.date]=[]; byDate[e.date].push(e); });
+  document.getElementById('diary-area').innerHTML=Object.entries(byDate).map(([date,entries])=>`
+    <div class="card-box mb-3">
+      <div class="fw-bold mb-2" style="color:var(--primary);font-size:14px">
+        <i class="fas fa-calendar-day me-2" style="color:var(--accent)"></i>
+        ${new Date(date+'T00:00').toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
+      </div>
+      ${entries.map(e=>`
+        <div class="diary-entry">
+          <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-1">
+            <div>
+              ${e.period?`<span class="diary-period-badge">${e.period}</span>`:''}
+              ${e.subject?`<span class="subject-pill me-1">${e.subject}</span>`:''}
+              ${e.chapterId?`<span class="badge" style="background:#ede9fe;color:#5b21b6">${e.chapterId}: ${e.chapterName}</span>`:''}
+            </div>
+            <button class="btn btn-xs btn-outline-danger" style="padding:1px 8px;font-size:11px" onclick="deleteDiaryEntry(${e.id})"><i class="fas fa-trash"></i></button>
+          </div>
+          ${e.topics?`<div style="font-size:13px;margin-bottom:4px"><strong>Topics:</strong> ${e.topics}</div>`:''}
+          ${e.homework?`<div style="font-size:12px;color:#059669"><i class="fas fa-home me-1"></i><strong>HW:</strong> ${e.homework}</div>`:''}
+          ${e.remarks?`<div style="font-size:12px;color:#64748b;margin-top:3px"><i class="fas fa-comment me-1"></i>${e.remarks}</div>`:''}
+        </div>`).join('')}
+    </div>`).join('');
+}
+
+function deleteDiaryEntry(id){ if(!confirm('Delete entry?')) return; ss('xii_diary',getDiary().filter(e=>e.id!==id)); renderDiary(); }
+
+function printDiary(){
+  const orig=document.title;
+  document.title='Teacher Diary — '+document.getElementById('diary-month').value;
+  window.print();
+  document.title=orig;
+}
+
+// ===================== PDF HANDLING (IndexedDB) =====================
+const PDF_DB_NAME = 'classxii_pdfs';
+const PDF_STORE   = 'pdfs';
+let _pdfDb = null;
+
+function openPdfDb() {
+  return new Promise((res, rej) => {
+    if (_pdfDb) return res(_pdfDb);
+    const req = indexedDB.open(PDF_DB_NAME, 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore(PDF_STORE, { keyPath: 'id' });
+    req.onsuccess = e => { _pdfDb = e.target.result; res(_pdfDb); };
+    req.onerror   = e => rej(e);
+  });
+}
+
+function savePdfToDb(id, name, dataUrl) {
+  return openPdfDb().then(db => new Promise((res, rej) => {
+    const tx = db.transaction(PDF_STORE, 'readwrite');
+    tx.objectStore(PDF_STORE).put({ id, name, dataUrl });
+    tx.oncomplete = res; tx.onerror = rej;
+  }));
+}
+
+function getPdfFromDb(id) {
+  return openPdfDb().then(db => new Promise((res, rej) => {
+    const req = db.transaction(PDF_STORE).objectStore(PDF_STORE).get(id);
+    req.onsuccess = e => res(e.target.result);
+    req.onerror   = rej;
+  }));
+}
+
+function deletePdfFromDb(id) {
+  return openPdfDb().then(db => new Promise((res, rej) => {
+    const tx = db.transaction(PDF_STORE, 'readwrite');
+    tx.objectStore(PDF_STORE).delete(id);
+    tx.oncomplete = res; tx.onerror = rej;
+  }));
+}
+
+// Drag & Drop helpers
+function dragOver(e, zoneId) {
+  e.preventDefault();
+  document.getElementById(zoneId).classList.add('drag-over');
+}
+function dragLeave(zoneId) {
+  document.getElementById(zoneId).classList.remove('drag-over');
+}
+function dropFile(e, inputId, zoneId, previewId) {
+  e.preventDefault();
+  dragLeave(zoneId);
+  const file = e.dataTransfer.files[0];
+  if (!file || file.type !== 'application/pdf') { alert('Please drop a PDF file.'); return; }
+  const input = document.getElementById(inputId);
+  const dt = new DataTransfer();
+  dt.items.add(file);
+  input.files = dt.files;
+  fileSelected(input, zoneId, previewId);
+}
+
+function fileSelected(input, zoneId, previewId) {
+  const file = input.files[0];
+  if (!file) return;
+  const sizeMB = (file.size / 1048576).toFixed(1);
+  if (file.size > 20 * 1048576) { alert('File too large. Max 20 MB.'); input.value=''; return; }
+  const zone = document.getElementById(zoneId);
+  zone.classList.add('has-file');
+  zone.innerHTML = `<i class="fas fa-check-circle fa-2x mb-1 d-block" style="color:#10b981"></i><div style="font-size:13px;font-weight:600;color:#065f46">${file.name}</div><div style="font-size:11px;color:#94a3b8">${sizeMB} MB — ready to save</div>`;
+  document.getElementById(previewId).innerHTML = `<div class="pdf-card"><i class="fas fa-file-pdf pdf-icon"></i><div><div class="pdf-name">${file.name}</div><div class="pdf-size">${sizeMB} MB</div></div></div>`;
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((res, rej) => {
+    const reader = new FileReader();
+    reader.onload = e => res(e.target.result);
+    reader.onerror = rej;
+    reader.readAsDataURL(file);
+  });
+}
+
+// Open PDF viewer
+let _currentPdfDataUrl = null;
+function openPdfViewer(pdfId, title) {
+  getPdfFromDb(pdfId).then(record => {
+    if (!record) { alert('PDF not found. It may have been deleted.'); return; }
+    _currentPdfDataUrl = record.dataUrl;
+    document.getElementById('pdf-viewer-title').textContent = title || record.name;
+    document.getElementById('pdf-viewer-frame').src = record.dataUrl;
+    new bootstrap.Modal(document.getElementById('pdfViewerModal')).show();
+  });
+}
+
+function downloadCurrentPdf() {
+  if (!_currentPdfDataUrl) return;
+  const title = document.getElementById('pdf-viewer-title').textContent;
+  const a = document.createElement('a');
+  a.href = _currentPdfDataUrl;
+  a.download = title.endsWith('.pdf') ? title : title + '.pdf';
+  a.click();
+}
+
+// ===================== PATCH: saveAssignment to store PDF =====================
+const _origSaveAssignment = saveAssignment;
+async function saveAssignment() {
+  const title = document.getElementById('asgn-title').value.trim();
+  if (!title) { alert('Please enter a title'); return; }
+  const students = getStudents();
+  const submissions = {};
+  students.forEach(s => {
+    const submitted = document.getElementById('asgn-sub-'+s.id)?.checked;
+    const marks = document.getElementById('asgn-m-'+s.id)?.value;
+    submissions[s.id] = { submitted, marks: marks!==''?parseFloat(marks):'' };
+  });
+  const pdfInput = document.getElementById('asgn-pdf-input');
+  const pdfFile  = pdfInput && pdfInput.files[0];
+  const pdfId    = pdfFile ? 'asgn_' + Date.now() : null;
+
+  const a = {
+    id: Date.now(), title,
+    subject: document.getElementById('asgn-subject').value,
+    dueDate: document.getElementById('asgn-due').value,
+    maxMarks: parseFloat(document.getElementById('asgn-marks').value)||10,
+    description: document.getElementById('asgn-desc').value,
+    topics: document.getElementById('asgn-topics').value,
+    pdfId, pdfName: pdfFile ? pdfFile.name : null,
+    submissions, createdAt: new Date().toISOString()
+  };
+
+  if (pdfFile) {
+    const dataUrl = await readFileAsDataUrl(pdfFile);
+    await savePdfToDb(pdfId, pdfFile.name, dataUrl);
+  }
+
+  const assignments = getAssignments();
+  assignments.push(a);
+  ss('xii_assignments', assignments);
+  bootstrap.Modal.getInstance(document.getElementById('assignmentModal')).hide();
+  renderAssignments();
+}
+
+// ===================== PATCH: saveSyllabus to store PDF =====================
+const _origSaveSyllabus = saveSyllabus;
+async function saveSyllabus() {
+  const subject = document.getElementById('syl-subject').value;
+  const title   = document.getElementById('syl-title').value.trim();
+  if (!subject || !title) { alert('Subject and title required'); return; }
+
+  const pdfInput = document.getElementById('syl-pdf-input');
+  const pdfFile  = pdfInput && pdfInput.files[0];
+  const pdfId    = pdfFile ? 'syl_' + Date.now() : null;
+
+  const item = {
+    id: Date.now(), subject, title,
+    type: document.getElementById('syl-type').value,
+    description: document.getElementById('syl-desc').value,
+    covered: document.getElementById('syl-covered').checked,
+    pdfId, pdfName: pdfFile ? pdfFile.name : null,
+    createdAt: new Date().toISOString()
+  };
+
+  if (pdfFile) {
+    const dataUrl = await readFileAsDataUrl(pdfFile);
+    await savePdfToDb(pdfId, pdfFile.name, dataUrl);
+  }
+
+  const syl = getSyllabus();
+  syl.push(item);
+  ss('xii_syllabus', syl);
+  bootstrap.Modal.getInstance(document.getElementById('syllabusModal')).hide();
+  renderSyllabus();
+}
+
+// ===================== PATCH: renderSyllabus — show PDF button =====================
+const _origRenderSyllabus = renderSyllabus;
+function renderSyllabus() {
+  const syl      = getSyllabus();
+  const subjects = getSubjects();
+  const typeIcon  = {chapter:'fa-bookmark',book:'fa-book',worksheet:'fa-file-alt',note:'fa-sticky-note'};
+  const typeLabel = {chapter:'Chapter/Topic',book:'Textbook',worksheet:'Worksheet',note:'Note'};
+
+  if (!syl.length) {
+    document.getElementById('syllabus-by-subject').innerHTML = `
+      <div class="text-center py-5 text-muted">
+        <i class="fas fa-book-open fa-3x mb-3 d-block" style="opacity:0.3"></i>
+        No resources added yet.<br>
+        <small>Add chapters, worksheets, and book references to track your Class XII syllabus coverage.</small><br>
+        <button class="btn btn-sm btn-primary-custom mt-3" onclick="openSyllabusModal()">Add First Resource</button>
+      </div>`;
+    return;
+  }
+
+  const bySub = {};
+  subjects.forEach(s => bySub[s] = []);
+  syl.forEach(item => { if (bySub[item.subject]) bySub[item.subject].push(item); });
+
+  document.getElementById('syllabus-by-subject').innerHTML = subjects.filter(s => bySub[s].length > 0).map(sub => {
+    const items   = bySub[sub];
+    const covered = items.filter(i => i.covered).length;
+    return `<div class="card-box mb-3">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0" style="color:var(--primary)">${sub}</h6>
+        <div style="font-size:12px;color:#64748b">${covered}/${items.length} covered</div>
+      </div>
+      <div class="progress-bar-custom mb-3"><div class="progress-fill" style="width:${items.length ? (covered/items.length)*100 : 0}%;background:#10b981"></div></div>
+      ${items.map(item => `
+        <div class="syllabus-item ${item.covered?'':'opacity-75'} d-flex justify-content-between align-items-start">
+          <div>
+            <span class="fw-semibold" style="font-size:13px">
+              <i class="fas ${typeIcon[item.type]||'fa-file'} me-2" style="color:var(--accent)"></i>${item.title}
+            </span>
+            <span style="font-size:11px;color:#94a3b8;margin-left:8px">[${typeLabel[item.type]||item.type}]</span>
+            ${item.covered ? '<span class="badge bg-success ms-2" style="font-size:10px">Covered</span>' : ''}
+            ${item.pdfId ? `<span class="badge ms-2" style="background:#fef2f2;color:#dc2626;font-size:10px;border:1px solid #fca5a5"><i class="fas fa-file-pdf me-1"></i>${item.pdfName||'PDF'}</span>` : ''}
+            ${item.description ? `<div style="font-size:12px;color:#475569;margin-top:3px">${item.description.substring(0,120)}${item.description.length>120?'...':''}</div>` : ''}
+          </div>
+          <div class="d-flex gap-2 ms-3 flex-shrink-0">
+            ${item.pdfId ? `<button class="btn btn-sm btn-outline-danger" onclick="openPdfViewer('${item.pdfId}','${item.title.replace(/'/g,"\\'")}')"><i class="fas fa-file-pdf me-1"></i>View PDF</button>` : ''}
+            <button class="btn btn-sm ${item.covered?'btn-outline-secondary':'btn-outline-success'}" onclick="toggleCovered(${item.id})" title="${item.covered?'Mark not covered':'Mark covered'}">
+              <i class="fas ${item.covered?'fa-times':'fa-check'}"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-danger" onclick="deleteSyllabus(${item.id})"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>`).join('')}
+    </div>`;
+  }).join('') || `<div class="text-center py-3 text-muted">No resources added yet.</div>`;
+}
+
+// ===================== PATCH: renderAssignments — show PDF button =====================
+const _origRenderAssignments = renderAssignments;
+function renderAssignments() {
+  const assignments = getAssignments();
+  if (!assignments.length) {
+    document.getElementById('assignment-list').innerHTML = `<div class="text-center py-5 text-muted"><i class="fas fa-tasks fa-3x mb-3 d-block" style="opacity:0.3"></i>No assignments yet.<br><button class="btn btn-sm btn-primary-custom mt-3" onclick="openAssignmentModal()">Create First Assignment</button></div>`;
+    return;
+  }
+  document.getElementById('assignment-list').innerHTML = assignments.map(a => {
+    const subs = Object.values(a.submissions || {});
+    const submitted = subs.filter(s => s.submitted).length;
+    const due = a.dueDate ? new Date(a.dueDate) : null;
+    const overdue = due && due < new Date();
+    return `<div class="card-box mb-3">
+      <div class="d-flex justify-content-between align-items-start mb-2">
+        <div>
+          <h6 class="fw-bold mb-1">${a.title} ${a.subject?`<span class="subject-pill ms-2">${a.subject}</span>`:''}</h6>
+          <div style="font-size:12px;color:#64748b">Due: ${a.dueDate||'Not set'} · Max: ${a.maxMarks} marks${overdue?' <span class="badge bg-danger ms-1">Overdue</span>':''}</div>
+          ${a.topics ? `<div style="font-size:11px;color:#94a3b8;margin-top:2px">Topics: ${a.topics}</div>` : ''}
+          ${a.pdfId  ? `<div class="mt-1"><span class="badge" style="background:#fef2f2;color:#dc2626;border:1px solid #fca5a5"><i class="fas fa-file-pdf me-1"></i>${a.pdfName||'Worksheet PDF'}</span></div>` : ''}
+          ${a.description ? `<div style="font-size:12px;margin-top:4px;color:#475569">${a.description.substring(0,120)}${a.description.length>120?'...':''}</div>` : ''}
+        </div>
+        <div class="d-flex gap-2 flex-shrink-0">
+          ${a.pdfId ? `<button class="btn btn-sm btn-outline-danger" onclick="openPdfViewer('${a.pdfId}','${a.title.replace(/'/g,"\\'")}')"><i class="fas fa-file-pdf me-1"></i>View PDF</button>` : ''}
+          <button class="btn btn-sm btn-outline-primary" onclick="viewAssignment(${a.id})"><i class="fas fa-eye me-1"></i>View</button>
+          <button class="btn btn-sm btn-outline-danger" onclick="deleteAssignment(${a.id})"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-3">
+        <div style="font-size:12px"><span class="fw-bold" style="color:#10b981">${submitted}</span><span style="color:#64748b">/20 submitted</span></div>
+        <div class="flex-grow-1 progress-bar-custom"><div class="progress-fill" style="width:${(submitted/20)*100}%;background:#10b981"></div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ===================== EXCEL EXPORT / IMPORT =====================
+function exportFullExcel(){
+  const wb=XLSX.utils.book_new();
+  const students=getStudents(); const exams=getExams(); const tests=getTests();
+
+  // Sheet 1 – Exam Results
+  const examHdr=['Student','Adm No',...exams.map(e=>e.name+'\n('+e.subject+')\nMax:'+e.maxMarks)];
+  const examRows=students.map(s=>[s.name,s.admNo,...exams.map(e=>{
+    const r=e.results&&e.results[s.id]; return r&&r.marks!==''?r.marks:'';
+  })]);
+  const ws1=XLSX.utils.aoa_to_sheet([examHdr,...examRows]);
+  ws1['!cols']=[{wch:20},{wch:10},...exams.map(()=>({wch:18}))];
+  XLSX.utils.book_append_sheet(wb,ws1,'Exam Results');
+
+  // Sheet 2 – Class Tests
+  const testHdr=['Student','Adm No',...tests.map(t=>t.title+(t.chapterId?' ['+t.chapterId+']':'')+'\nMax:'+t.maxMarks)];
+  const testRows=students.map(s=>[s.name,s.admNo,...tests.map(t=>{
+    const r=t.results&&t.results[s.id]; return r&&r.marks!=='AB'&&r.marks!==''?r.marks:(r&&r.absent?'AB':'');
+  })]);
+  const ws2=XLSX.utils.aoa_to_sheet([testHdr,...testRows]);
+  XLSX.utils.book_append_sheet(wb,ws2,'Class Tests');
+
+  // Sheet 3 – XI Baseline
+  const baseHdr=['Student','Adm No','XI MidTerm1 Marks','XI MidTerm1 %','XI MidTerm1 Grade','XI Annual Marks','XI Annual %','XI Annual Grade'];
+  const baseRows=students.map(s=>[s.name,s.admNo,s.xi.mt1Marks,s.xi.mt1Pct,s.xi.mt1Grade,s.xi.annMarks,s.xi.annPct,s.xi.annGrade]);
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([baseHdr,...baseRows]),'XI Baseline');
+
+  XLSX.writeFile(wb,'ClassXII_Results_'+new Date().toISOString().split('T')[0]+'.xlsx');
+}
+
+function exportAttendanceExcel(){
+  const wb=XLSX.utils.book_new();
+  const students=getStudents(); const att=getAttendance();
+  // Get all unique dates
+  const dates=[...new Set(Object.keys(att))].sort();
+  const hdr=['Student','Adm No',...dates,'Present','Absent','Late','Att%'];
+  const rows=students.map(s=>{
+    let p=0,a=0,l=0;
+    const statuses=dates.map(d=>{
+      const st=(att[d]&&att[d][s.id])||'P';
+      if(st==='P')p++; else if(st==='A')a++; else if(st==='L')l++;
+      return st;
+    });
+    const total=dates.length;
+    return [s.name,s.admNo,...statuses,p,a,l,total>0?((p/total)*100).toFixed(1)+'%':'—'];
+  });
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([hdr,...rows]),'Attendance');
+  XLSX.writeFile(wb,'Attendance_'+new Date().toISOString().split('T')[0]+'.xlsx');
+}
+
+function exportMasteryExcel(){
+  const wb=XLSX.utils.book_new();
+  const students=getStudents();
+  const hdr=['Student','Adm No',...ALL_CHAPTERS.map(c=>c.id+' '+c.name),'Overall Avg'];
+  const rows=students.map(s=>{
+    const chPcts=ALL_CHAPTERS.map(ch=>{
+      const st=getStudentChapterStats(s.id,ch.id);
+      return st.avg!==null?st.avg.toFixed(1)+'%':'Not Tested';
+    });
+    const valid=ALL_CHAPTERS.map(ch=>getStudentChapterStats(s.id,ch.id)).filter(st=>st.avg!==null);
+    const avg=valid.length?(valid.reduce((a,b)=>a+b.avg,0)/valid.length).toFixed(1)+'%':'—';
+    return [s.name,s.admNo,...chPcts,avg];
+  });
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([hdr,...rows]),'Chapter Mastery');
+  XLSX.writeFile(wb,'ChapterMastery_'+new Date().toISOString().split('T')[0]+'.xlsx');
+}
+
+function downloadImportTemplate(){
+  const wb=XLSX.utils.book_new();
+  const students=getStudents();
+  const hdr=['Adm No','Student Name','Marks Obtained','Remarks'];
+  const rows=students.map(s=>[s.admNo,s.name,'','']);
+  const ws=XLSX.utils.aoa_to_sheet([
+    ['EXAM NAME:','','MAX MARKS:',''],[''],
+    hdr,...rows
+  ]);
+  ws['!cols']=[{wch:12},{wch:22},{wch:16},{wch:30}];
+  XLSX.utils.book_append_sheet(wb,ws,'Import Template');
+  XLSX.writeFile(wb,'ExamMarks_ImportTemplate.xlsx');
+}
+
+function importFromExcel(input){
+  const file=input.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'binary'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const data=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+      // Row 0: exam name/max marks meta; Row 2: headers; Row 3+: data
+      const examName=(data[0]&&data[0][1])||'Imported Exam';
+      const maxMarks=parseFloat(data[0]&&data[0][3])||100;
+      const students=getStudents();
+      const results={};
+      data.slice(3).forEach(row=>{
+        const admNo=String(row[0]).trim();
+        const marks=row[2];
+        const remarks=row[3]||'';
+        const s=students.find(x=>x.admNo===admNo);
+        if(s) results[s.id]={marks:marks!==''?parseFloat(marks):'',remarks};
+      });
+      if(Object.keys(results).length===0){alert('No matching students found. Check Adm No column.');return;}
+      const exams=getExams();
+      exams.push({id:Date.now(),name:examName,subject:'Political Science',date:'',maxMarks,results,createdAt:new Date().toISOString()});
+      ss('xii_exams',exams);
+      alert(`✅ Imported "${examName}" with ${Object.keys(results).length} student scores.`);
+      if(document.getElementById('page-exams').classList.contains('active')) renderExams();
+    }catch(err){alert('Error reading file: '+err.message);}
+  };
+  reader.readAsBinaryString(file);
+  input.value='';
+}
+
+// ===================== REPORT CARDS =====================
+function renderReportCardList(){
+  const students=getStudents();
+  document.getElementById('report-card-list').innerHTML=students.map(s=>`
+    <div class="col-md-4 col-lg-3">
+      <div class="card-box text-center p-3">
+        <div class="avatar mx-auto mb-2" style="width:48px;height:48px;font-size:18px">${s.name[0]}</div>
+        <div class="fw-bold" style="font-size:13px">${s.name}</div>
+        <div style="font-size:11px;color:#94a3b8">Adm: ${s.admNo}</div>
+        <button class="btn btn-sm btn-primary-custom w-100 mt-2" onclick="openReportCard(${s.id})">
+          <i class="fas fa-id-card me-1"></i>View Report
+        </button>
+      </div>
+    </div>`).join('');
+}
+
+function openReportCard(sid){
+  const s=getStudents().find(x=>x.id===sid); if(!s) return;
+  const exams=getExams(); const tests=getTests(); const att=getAttendance();
+
+  // Attendance summary
+  const dates=Object.keys(att); let ap=0,aa=0,al=0;
+  dates.forEach(d=>{ const st=(att[d]&&att[d][sid])||'P'; if(st==='P')ap++; else if(st==='A')aa++; else if(st==='L')al++; });
+  const attPct=dates.length>0?((ap/dates.length)*100).toFixed(1):'—';
+
+  // Exam rows
+  const examRowsHTML=exams.map(ex=>{
+    const r=ex.results&&ex.results[sid]; const m=r&&r.marks!==''?r.marks:'—';
+    const pct=m!=='—'?((parseFloat(m)/ex.maxMarks)*100).toFixed(1):'—';
+    const grade=m!=='—'?calcGrade(parseFloat(pct)):'—';
+    return `<div class="rc-subject-row">
+      <div style="flex:2;font-size:13px">${ex.name} <span class="subject-pill ms-1">${ex.subject||''}</span></div>
+      <div style="flex:1;text-align:center;font-weight:700">${m!=='—'?m+'/'+ex.maxMarks:m}</div>
+      <div style="flex:1;text-align:center;color:${m!=='—'?pctColor(parseFloat(pct)):'#94a3b8'};font-weight:700">${pct}${pct!=='—'?'%':''}</div>
+      <div style="flex:1;text-align:center">${grade!=='—'?gradeBadge(grade):'—'}</div>
+    </div>`;
+  }).join('') || '<div style="font-size:13px;color:#94a3b8;padding:8px 0">No exams recorded yet</div>';
+
+  // Chapter mastery summary
+  const masteryHTML=ALL_CHAPTERS.map(ch=>{
+    const st=getStudentChapterStats(sid,ch.id);
+    const level=getMasteryLevel(st.avg,st.attempted);
+    const ms=MASTERY_STYLE[level];
+    return `<span style="display:inline-block;margin:2px 3px;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;background:${ms.bg};color:${ms.color}">${ch.id}: ${st.avg!==null?st.avg.toFixed(0)+'%':'NT'}</span>`;
+  }).join('');
+
+  document.getElementById('report-card-area').innerHTML=`
+    <div id="rc-print-content" style="padding:24px">
+      <div class="rc-header mb-3">
+        <div>
+          <div style="font-size:18px;font-weight:800">Salwan Public School, Tronica City</div>
+          <div style="font-size:12px;opacity:0.8">Academic Year 2025-26 · Class XII Humanities</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:13px;opacity:0.8">Progress Report</div>
+          <div style="font-size:11px;opacity:0.6">${new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'})}</div>
+        </div>
+      </div>
+      <div class="row g-3 mb-3">
+        <div class="col-md-6"><div class="card-box">
+          <div style="font-size:13px;color:#64748b;margin-bottom:4px">Student Details</div>
+          <div style="font-size:18px;font-weight:800;color:var(--primary)">${s.name}</div>
+          <div style="font-size:12px;color:#64748b">Admission No: <strong>${s.admNo}</strong> · Roll No: ${s.id}</div>
+          <div style="font-size:12px;color:#64748b">Class: XII Humanities · Subject: Political Science</div>
+        </div></div>
+        <div class="col-md-6"><div class="card-box">
+          <div style="font-size:13px;color:#64748b;margin-bottom:4px">Attendance Summary</div>
+          <div style="font-size:2rem;font-weight:800;color:${attPct!=='—'&&parseFloat(attPct)>=75?'#10b981':'#ef4444'}">${attPct}${attPct!=='—'?'%':''}</div>
+          <div style="font-size:12px;color:#64748b">Present: ${ap} · Absent: ${aa} · Late: ${al}</div>
+          ${attPct!=='—'&&parseFloat(attPct)<75?'<div style="color:#ef4444;font-size:12px"><i class="fas fa-warning me-1"></i>Below 75% — needs improvement</div>':''}
+        </div></div>
+      </div>
+      <div class="card-box mb-3">
+        <div style="font-size:13px;font-weight:700;color:var(--primary);margin-bottom:10px">Exam Performance</div>
+        <div class="d-flex justify-content-between" style="font-size:11px;font-weight:700;color:#64748b;padding:4px 0;border-bottom:2px solid #e2e8f0;margin-bottom:6px">
+          <div style="flex:2">EXAM</div><div style="flex:1;text-align:center">MARKS</div>
+          <div style="flex:1;text-align:center">%</div><div style="flex:1;text-align:center">GRADE</div>
+        </div>
+        ${examRowsHTML}
+        <div class="mt-3" style="font-size:12px;color:#64748b;font-style:italic">XI Annual (Baseline): ${s.xi.annMarks}/120 (${s.xi.annPct}%) — Grade: ${s.xi.annGrade}</div>
+      </div>
+      <div class="card-box mb-3">
+        <div style="font-size:13px;font-weight:700;color:var(--primary);margin-bottom:10px">Chapter-wise Mastery (Political Science)</div>
+        <div>${masteryHTML}</div>
+        <div style="font-size:10px;color:#94a3b8;margin-top:8px">NT = Not Tested · ≥70% Mastered · 50-69% Developing · &lt;50% Needs Work</div>
+      </div>
+      <div class="card-box">
+        <div class="row">
+          <div class="col-md-6"><div style="font-size:12px;color:#64748b;margin-bottom:20px">Teacher's Remarks:</div>
+            <div style="border-bottom:1px solid #e2e8f0;margin-bottom:8px"></div>
+            <div style="border-bottom:1px solid #e2e8f0"></div></div>
+          <div class="col-md-6 text-end">
+            <div style="font-size:12px;color:#64748b;margin-bottom:40px">Class Teacher's Signature:</div>
+            <div style="border-top:1px solid #1a3c6e;display:inline-block;width:160px;font-size:11px;padding-top:4px;color:#64748b">Class Teacher</div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  window._reportCardStudent=s;
+  new bootstrap.Modal(document.getElementById('reportCardModal')).show();
+}
+
+function exportReportCardPDF(){
+  const s=window._reportCardStudent; if(!s) return;
+  const el=document.getElementById('rc-print-content');
+  html2canvas(el,{scale:2,useCORS:true}).then(canvas=>{
+    const imgData=canvas.toDataURL('image/png');
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF('p','mm','a4');
+    const pageW=pdf.internal.pageSize.getWidth();
+    const pageH=pdf.internal.pageSize.getHeight();
+    const imgW=pageW-20; const imgH=(canvas.height*imgW)/canvas.width;
+    let yPos=10;
+    if(imgH>pageH-20){
+      // Multi-page
+      let srcY=0; const ratio=canvas.width/imgW;
+      while(srcY<canvas.height){
+        const sliceH=Math.min((pageH-20)*ratio,canvas.height-srcY);
+        const sliceCanvas=document.createElement('canvas');
+        sliceCanvas.width=canvas.width; sliceCanvas.height=sliceH;
+        sliceCanvas.getContext('2d').drawImage(canvas,0,-srcY);
+        pdf.addImage(sliceCanvas.toDataURL('image/png'),'PNG',10,yPos,imgW,sliceH/ratio);
+        srcY+=sliceH; if(srcY<canvas.height) pdf.addPage();
+      }
+    } else { pdf.addImage(imgData,'PNG',10,yPos,imgW,imgH); }
+    pdf.save('ReportCard_'+s.name.replace(/\s+/g,'_')+'.pdf');
+  });
+}
+
+// ===================== AI WEAK AREA ANALYSIS =====================
+function runAIAnalysis(){
+  const students=getStudents(); const tests=getTests(); const exams=getExams();
+  const att=getAttendance(); const findings=[];
+
+  // 1. Class-level chapter weak areas
+  ALL_CHAPTERS.forEach(ch=>{
+    const chTests=getChapterTests(ch.id);
+    if(!chTests.length) return;
+    const allScores=students.flatMap(s=>{
+      const st=getStudentChapterStats(s.id,ch.id);
+      return st.avg!==null?[st.avg]:[];
+    });
+    if(!allScores.length) return;
+    const avg=allScores.reduce((a,b)=>a+b,0)/allScores.length;
+    const below50=students.filter(s=>{ const st=getStudentChapterStats(s.id,ch.id); return st.avg!==null&&st.avg<50; });
+    if(avg<50) findings.push({type:'danger',icon:'fa-exclamation-triangle',
+      title:`Chapter ${ch.id} — Class Average Critical: ${avg.toFixed(1)}%`,
+      detail:`<strong>${ch.name}</strong> has class average below 50%. ${below50.length} students need urgent attention: <em>${below50.map(s=>s.name.split(' ')[0]).join(', ')}</em>`,
+      action:`Recommend: Revision class + 2 additional tests on ${ch.id}`});
+    else if(avg<65 && chTests.length<3) findings.push({type:'warning',icon:'fa-exclamation-circle',
+      title:`Chapter ${ch.id} — Needs More Tests (${chTests.length}/3 done)`,
+      detail:`<strong>${ch.name}</strong> has only ${chTests.length} test(s). Class avg: ${avg.toFixed(1)}%. Minimum 3 tests needed for reliable mastery data.`,
+      action:`Conduct ${3-chTests.length} more test(s) on ${ch.id}`});
+  });
+
+  // 2. Individual students needing attention
+  const struggleStudents=students.filter(s=>{
+    const valid=ALL_CHAPTERS.map(ch=>getStudentChapterStats(s.id,ch.id)).filter(st=>st.avg!==null);
+    if(!valid.length) return false;
+    const avg=valid.reduce((a,b)=>a+b.avg,0)/valid.length;
+    return avg<45;
+  });
+  if(struggleStudents.length) findings.push({type:'danger',icon:'fa-user-times',
+    title:`${struggleStudents.length} Student(s) Consistently Below 45%`,
+    detail:struggleStudents.map(s=>{
+      const valid=ALL_CHAPTERS.map(ch=>getStudentChapterStats(s.id,ch.id)).filter(st=>st.avg!==null);
+      const avg=valid.reduce((a,b)=>a+b.avg,0)/valid.length;
+      return `<strong>${s.name}</strong> (${avg.toFixed(1)}% avg)`;
+    }).join(' · '),
+    action:'Recommend: Individual attention, parent meeting, remedial classes'});
+
+  // 3. Attendance concern
+  const lowAtt=students.filter(s=>{
+    const dates=Object.keys(att); if(!dates.length) return false;
+    const p=dates.filter(d=>(att[d]&&att[d][s.id])||'P'==='P').length;
+    return (p/dates.length)<0.75;
+  });
+  if(lowAtt.length) findings.push({type:'warning',icon:'fa-calendar-times',
+    title:`${lowAtt.length} Student(s) Below 75% Attendance`,
+    detail:lowAtt.map(s=>{
+      const dates=Object.keys(att);
+      const p=dates.filter(d=>((att[d]&&att[d][s.id])||'P')==='P').length;
+      return `<strong>${s.name}</strong> (${dates.length?((p/dates.length)*100).toFixed(0):0}%)`;
+    }).join(' · '),
+    action:'Attendance warning letters required'});
+
+  // 4. Untested chapters
+  const untestedChapters=ALL_CHAPTERS.filter(ch=>getChapterTests(ch.id).length===0);
+  if(untestedChapters.length) findings.push({type:'info',icon:'fa-clipboard-list',
+    title:`${untestedChapters.length} Chapters Have No Tests Yet`,
+    detail:`Chapters not yet tested: ${untestedChapters.map(c=>c.id+' '+c.name).join(', ')}`,
+    action:'Schedule at least 3 tests per chapter before board exams'});
+
+  // 5. Top improvers (XII avg > XI by 15%+)
+  if(exams.length){
+    const improvers=students.filter(s=>{
+      const xiiScores=exams.map(ex=>{
+        const r=ex.results&&ex.results[s.id]; return r&&r.marks!==''?(parseFloat(r.marks)/ex.maxMarks)*100:null;
+      }).filter(v=>v!==null);
+      if(!xiiScores.length) return false;
+      const xiiAvg=xiiScores.reduce((a,b)=>a+b,0)/xiiScores.length;
+      return xiiAvg-s.xi.annPct>=15;
+    });
+    if(improvers.length) findings.push({type:'success',icon:'fa-arrow-up',
+      title:`${improvers.length} Student(s) Showing Strong Improvement`,
+      detail:improvers.map(s=>`<strong>${s.name}</strong>`).join(' · '),
+      action:'Acknowledge progress — encourage these students'});
+  }
+
+  // 6. No findings
+  if(!findings.length){ document.getElementById('ai-analysis-area').innerHTML=`
+    <div class="ai-card success"><i class="fas fa-check-circle me-2"></i>Great work! No critical issues detected. Keep adding tests to get more insights.</div>`;
+    return;
+  }
+
+  document.getElementById('ai-analysis-area').innerHTML=`
+    <div class="mb-3" style="font-size:12px;color:#64748b"><i class="fas fa-robot me-1"></i>Generated ${new Date().toLocaleTimeString()} · Based on ${tests.length} tests, ${exams.length} exams, ${Object.keys(att).length} attendance days</div>
+    ${findings.map(f=>`
+      <div class="ai-card ${f.type}">
+        <div class="d-flex gap-3">
+          <i class="fas ${f.icon} fa-lg mt-1" style="flex-shrink:0"></i>
+          <div>
+            <div class="fw-bold" style="font-size:14px;margin-bottom:4px">${f.title}</div>
+            <div style="font-size:13px;margin-bottom:6px">${f.detail}</div>
+            <div style="font-size:12px;padding:4px 10px;background:rgba(0,0,0,0.05);border-radius:6px">
+              <i class="fas fa-lightbulb me-1" style="color:var(--accent)"></i>${f.action}
+            </div>
+          </div>
+        </div>
+      </div>`).join('')}`;
+}
+
+// ===================== POLSCI SYLLABUS OVERVIEW =====================
+function getCoveredChapters() { return ls('xii_covered_chapters', {}); }
+function toggleChapterCovered(chId) {
+  const cov = getCoveredChapters();
+  cov[chId] = !cov[chId];
+  ss('xii_covered_chapters', cov);
+  renderPolsciSyllabusOverview();
+}
+
+function renderPolsciSyllabusOverview() {
+  const cov = getCoveredChapters();
+  const parts = [POLSCI_SYLLABUS.partA, POLSCI_SYLLABUS.partB];
+  const totalChapters = ALL_CHAPTERS.length;
+  const coveredCount  = ALL_CHAPTERS.filter(c => cov[c.id]).length;
+  const pct = Math.round((coveredCount / totalChapters) * 100);
+
+  let html = `
+    <div class="card-box mb-3">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div>
+          <span class="fw-bold" style="font-size:15px;color:var(--primary)">Overall Syllabus Coverage</span>
+          <span class="ms-2" style="font-size:13px;color:#64748b">${coveredCount} / ${totalChapters} chapters taught</span>
+        </div>
+        <span style="font-size:1.4rem;font-weight:800;color:${pctColor(pct)}">${pct}%</span>
+      </div>
+      <div class="progress-bar-custom" style="height:10px">
+        <div style="height:100%;border-radius:5px;background:${pctColor(pct)};width:${pct}%;transition:width 0.5s"></div>
+      </div>
+    </div>`;
+
+  parts.forEach(part => {
+    const partCovered = part.chapters.filter(c => cov[c.id]).length;
+    html += `<div class="card-box mb-3">
+      <div class="d-flex justify-content-between align-items-center mb-3" style="border-bottom:2px solid var(--accent);padding-bottom:8px">
+        <h6 class="fw-bold mb-0" style="color:var(--primary)">${part.name}</h6>
+        <span style="font-size:12px;color:#64748b">${partCovered}/${part.chapters.length} covered · ${part.chapters.reduce((a,c)=>a+c.marks,0)} marks</span>
+      </div>
+      <div class="row g-2">`;
+    part.chapters.forEach(ch => {
+      const isCov = !!cov[ch.id];
+      const tests = getChapterTests(ch.id);
+      const testBadge = tests.length >= 3
+        ? `<span class="badge bg-success" style="font-size:9px">${tests.length} tests ✓</span>`
+        : `<span class="badge bg-warning text-dark" style="font-size:9px">${tests.length}/3 tests</span>`;
+      html += `<div class="col-12">
+        <div style="border:1px solid ${isCov?'#6ee7b7':'#e2e8f0'};border-radius:8px;padding:10px 14px;background:${isCov?'#f0fdf4':'#fff'};transition:all 0.2s">
+          <div class="d-flex justify-content-between align-items-start gap-2">
+            <div class="flex-grow-1">
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <span style="font-weight:700;font-size:13px;color:var(--primary)">${ch.id} · ${ch.name}</span>
+                <span class="badge" style="background:#fef3c7;color:#92400e;font-size:10px">${ch.marks}M</span>
+                ${testBadge}
+                ${isCov ? '<span class="badge bg-success" style="font-size:10px"><i class="fas fa-check me-1"></i>Covered</span>' : ''}
+              </div>
+              <div style="font-size:11px;color:#64748b">${ch.topics.slice(0,4).join(' · ')}${ch.topics.length>4?' · …':''}</div>
+            </div>
+            <button class="btn btn-sm ${isCov?'btn-outline-secondary':'btn-outline-success'} flex-shrink-0"
+              onclick="toggleChapterCovered('${ch.id}')" style="font-size:11px;padding:3px 10px">
+              <i class="fas ${isCov?'fa-times':'fa-check'} me-1"></i>${isCov?'Unmark':'Mark Covered'}
+            </button>
+          </div>
+        </div>
+      </div>`;
+    });
+    html += `</div></div>`;
+  });
+
+  const el = document.getElementById('polsci-syllabus-overview');
+  if (el) el.innerHTML = html;
+}
+
+// ===================== CHAPTER MASTERY =====================
+
+function getChapterTests(chapterId) {
+  return getTests().filter(t => t.chapterId === chapterId);
+}
+
+function getStudentChapterStats(studentId, chapterId) {
+  const tests = getChapterTests(chapterId);
+  const scores = tests.map(t => {
+    const r = t.results && t.results[studentId];
+    if (!r || r.absent || r.marks === '' || r.marks === 'AB') return null;
+    return { pct: (parseFloat(r.marks) / t.maxMarks) * 100, marks: r.marks, max: t.maxMarks, title: t.title, date: t.date };
+  }).filter(Boolean);
+  const avg = scores.length ? scores.reduce((a, b) => a + b.pct, 0) / scores.length : null;
+  return { testCount: tests.length, attempted: scores.length, avg, scores };
+}
+
+function getMasteryLevel(avg, attempted) {
+  if (attempted === 0) return 'nt';
+  if (avg >= 70) return 'mastered';
+  if (avg >= 50) return 'developing';
+  return 'needs';
+}
+
+const MASTERY_STYLE = {
+  mastered:   { bg: '#d1fae5', color: '#065f46', label: 'Mastered',   icon: 'fa-check-circle' },
+  developing: { bg: '#dbeafe', color: '#1e40af', label: 'Developing', icon: 'fa-arrow-up' },
+  needs:      { bg: '#fee2e2', color: '#991b1b', label: 'Needs Work', icon: 'fa-exclamation-circle' },
+  nt:         { bg: '#f1f5f9', color: '#94a3b8', label: 'Not Tested', icon: 'fa-minus-circle' }
+};
+
+function buildStudentMasteryHTML(studentId) {
+  const parts = [POLSCI_SYLLABUS.partA, POLSCI_SYLLABUS.partB];
+  let html = '';
+  parts.forEach(part => {
+    html += `<div class="card-box mb-3">
+      <h6 class="fw-bold mb-3" style="color:var(--primary);border-bottom:2px solid var(--accent);padding-bottom:8px">${part.name}</h6>
+      <div class="row g-2">`;
+    part.chapters.forEach(ch => {
+      const stats = getStudentChapterStats(studentId, ch.id);
+      const level = getMasteryLevel(stats.avg, stats.attempted);
+      const ms = MASTERY_STYLE[level];
+      const testsNeeded = Math.max(0, 3 - stats.testCount);
+      const pctDisplay = stats.avg !== null ? stats.avg.toFixed(1) + '%' : '—';
+      html += `<div class="col-md-6">
+        <div style="border:1px solid #e2e8f0;border-radius:8px;padding:12px;background:${ms.bg}20;border-left:4px solid ${ms.color}20">
+          <div class="d-flex justify-content-between align-items-start mb-1">
+            <div style="font-size:12px;font-weight:700;color:var(--primary)">${ch.id} · ${ch.name}</div>
+            <span style="background:${ms.bg};color:${ms.color};padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;white-space:nowrap">
+              <i class="fas ${ms.icon} me-1"></i>${ms.label}
+            </span>
+          </div>
+          <div class="d-flex gap-3 align-items-center mt-2">
+            <div style="font-size:1.4rem;font-weight:800;color:${ms.color}">${pctDisplay}</div>
+            <div style="font-size:11px;color:#64748b;line-height:1.5">
+              ${stats.attempted}/${stats.testCount} test${stats.testCount!==1?'s':''} taken<br>
+              ${testsNeeded > 0 ? `<span style="color:#f59e0b"><i class="fas fa-info-circle me-1"></i>${testsNeeded} more test${testsNeeded!==1?'s':''} needed</span>` : '<span style="color:#10b981"><i class="fas fa-check me-1"></i>Min. tests done</span>'}
+            </div>
+          </div>
+          ${stats.scores.length ? `<div class="mt-2">
+            ${stats.scores.map(sc => `<span style="font-size:10px;background:#fff;border:1px solid #e2e8f0;border-radius:4px;padding:1px 6px;margin:1px;display:inline-block">${sc.title}: ${sc.pct.toFixed(0)}%</span>`).join('')}
+          </div>` : ''}
+          <div class="progress-bar-custom mt-2"><div style="height:100%;border-radius:3px;background:${ms.color};width:${stats.avg||0}%;transition:width 0.5s"></div></div>
+        </div>
+      </div>`;
+    });
+    html += `</div></div>`;
+  });
+  return html;
+}
+
+function renderChapterMasteryTab() {
+  const students = getStudents();
+  let testedCount = 0;
+  let allMasteryPcts = [];
+
+  const html = [POLSCI_SYLLABUS.partA, POLSCI_SYLLABUS.partB].map(part => {
+    return `<div class="card-box mb-3">
+      <h6 class="fw-bold mb-3" style="color:var(--primary);border-bottom:2px solid var(--accent);padding-bottom:8px">
+        <i class="fas fa-book-open me-2" style="color:var(--accent)"></i>${part.name}
+      </h6>
+      ${part.chapters.map(ch => {
+        const tests = getChapterTests(ch.id);
+        if (tests.length) testedCount++;
+        const studentStats = students.map(s => {
+          const st = getStudentChapterStats(s.id, ch.id);
+          return { name: s.name, ...st, level: getMasteryLevel(st.avg, st.attempted) };
+        });
+        const attempted = studentStats.filter(s => s.attempted > 0);
+        const classAvg = attempted.length ? attempted.reduce((a, b) => a + (b.avg||0), 0) / attempted.length : null;
+        if (classAvg !== null) allMasteryPcts.push(classAvg);
+        const masteredCount   = studentStats.filter(s => s.level === 'mastered').length;
+        const developingCount = studentStats.filter(s => s.level === 'developing').length;
+        const needsCount      = studentStats.filter(s => s.level === 'needs').length;
+        const ntCount         = studentStats.filter(s => s.level === 'nt').length;
+        const testCountBadge  = tests.length >= 3
+          ? `<span class="badge bg-success ms-2" style="font-size:10px"><i class="fas fa-check me-1"></i>${tests.length} tests</span>`
+          : `<span class="badge bg-warning text-dark ms-2" style="font-size:10px"><i class="fas fa-exclamation me-1"></i>${tests.length}/3 tests</span>`;
+
+        return `<div style="border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin-bottom:12px">
+          <div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2">
+            <div>
+              <span style="font-weight:700;font-size:14px;color:var(--primary)">${ch.id} · ${ch.name}</span>
+              ${testCountBadge}
+              <span class="badge ms-1" style="background:#fef3c7;color:#92400e;font-size:10px">${ch.marks}M in board</span>
+            </div>
+            <div style="font-size:13px;font-weight:700;color:${classAvg!==null?pctColor(classAvg):'#94a3b8'}">
+              Class Avg: ${classAvg!==null ? classAvg.toFixed(1)+'%' : 'No data'}
+            </div>
+          </div>
+          <div class="progress-bar-custom mb-2" style="height:8px">
+            <div style="height:100%;border-radius:3px;background:${classAvg!==null?pctColor(classAvg):'#e2e8f0'};width:${classAvg||0}%"></div>
+          </div>
+          <div class="d-flex gap-2 flex-wrap mb-2">
+            <span style="background:#d1fae5;color:#065f46;padding:2px 10px;border-radius:12px;font-size:11px;font-weight:600"><i class="fas fa-check-circle me-1"></i>Mastered: ${masteredCount}</span>
+            <span style="background:#dbeafe;color:#1e40af;padding:2px 10px;border-radius:12px;font-size:11px;font-weight:600"><i class="fas fa-arrow-up me-1"></i>Developing: ${developingCount}</span>
+            <span style="background:#fee2e2;color:#991b1b;padding:2px 10px;border-radius:12px;font-size:11px;font-weight:600"><i class="fas fa-exclamation-circle me-1"></i>Needs Work: ${needsCount}</span>
+            <span style="background:#f1f5f9;color:#94a3b8;padding:2px 10px;border-radius:12px;font-size:11px;font-weight:600"><i class="fas fa-minus-circle me-1"></i>Not Tested: ${ntCount}</span>
+          </div>
+          <div class="mt-2">
+            <div style="font-size:11px;font-weight:600;color:#64748b;margin-bottom:6px">Topics:</div>
+            <div>${ch.topics.map(t => `<span class="topic-tag">${t}</span>`).join('')}</div>
+          </div>
+          ${needsCount > 0 ? `<div class="mt-2" style="font-size:11px;color:#dc2626">
+            <i class="fas fa-user-times me-1"></i><strong>Needs attention:</strong>
+            ${studentStats.filter(s=>s.level==='needs').map(s=>s.name.split(' ')[0]).join(', ')}
+          </div>` : ''}
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
+
+  document.getElementById('chapter-mastery-list').innerHTML = html;
+  document.getElementById('cm-tested-chapters').textContent = testedCount;
+  const overallAvg = allMasteryPcts.length ? allMasteryPcts.reduce((a,b)=>a+b,0)/allMasteryPcts.length : null;
+  document.getElementById('cm-avg-mastery').textContent = overallAvg ? overallAvg.toFixed(1)+'%' : '—';
+}
+
+function renderHeatmap() {
+  const students = getStudents();
+  const chapters = ALL_CHAPTERS;
+
+  let tableHTML = `<table style="border-collapse:collapse;font-size:11px;min-width:900px">
+    <thead><tr>
+      <th style="padding:8px 10px;background:var(--primary);color:#fff;position:sticky;left:0;z-index:2;min-width:130px">Student</th>
+      ${chapters.map(ch => `<th style="padding:6px 4px;background:var(--primary);color:#fff;text-align:center;min-width:68px;writing-mode:vertical-rl;transform:rotate(180deg);height:90px" title="${ch.name}">${ch.id}<br><span style="font-size:9px;opacity:0.8">${ch.marks}M</span></th>`).join('')}
+      <th style="padding:8px 6px;background:var(--primary);color:#fff;text-align:center;min-width:60px">Avg</th>
+    </tr></thead>
+    <tbody>`;
+
+  students.forEach((s, si) => {
+    const rowBg = si % 2 === 0 ? '#fff' : '#f8fafc';
+    const cellData = chapters.map(ch => {
+      const st = getStudentChapterStats(s.id, ch.id);
+      const level = getMasteryLevel(st.avg, st.attempted);
+      const ms = MASTERY_STYLE[level];
+      const display = st.avg !== null ? st.avg.toFixed(0)+'%' : (st.testCount > 0 ? 'AB' : '—');
+      return { ms, display, avg: st.avg, testCount: st.testCount, level };
+    });
+    const validAvgs = cellData.filter(c => c.avg !== null).map(c => c.avg);
+    const rowAvg = validAvgs.length ? (validAvgs.reduce((a,b)=>a+b,0)/validAvgs.length).toFixed(1)+'%' : '—';
+    const rowAvgNum = validAvgs.length ? validAvgs.reduce((a,b)=>a+b,0)/validAvgs.length : 0;
+
+    tableHTML += `<tr style="background:${rowBg}">
+      <td style="padding:8px 10px;font-weight:600;position:sticky;left:0;background:${rowBg};border-right:2px solid #e2e8f0;z-index:1">${s.name}</td>
+      ${cellData.map(c => `<td style="padding:4px 2px;text-align:center;background:${c.ms.bg};color:${c.ms.color};font-weight:600;border:1px solid #fff" title="${c.testCount} test(s)">${c.display}</td>`).join('')}
+      <td style="padding:4px 6px;text-align:center;font-weight:700;color:${pctColor(rowAvgNum)}">${rowAvg}</td>
+    </tr>`;
+  });
+
+  // Class average row
+  tableHTML += `<tr style="background:#f0f4f8;font-weight:700">
+    <td style="padding:8px 10px;position:sticky;left:0;background:#f0f4f8;border-right:2px solid #e2e8f0;z-index:1;color:var(--primary)">Class Avg</td>
+    ${chapters.map(ch => {
+      const allStats = students.map(s => getStudentChapterStats(s.id, ch.id)).filter(st => st.avg !== null);
+      const avg = allStats.length ? allStats.reduce((a,b)=>a+b.avg,0)/allStats.length : null;
+      return `<td style="padding:4px 2px;text-align:center;font-weight:700;color:${avg?pctColor(avg):'#94a3b8'};border:1px solid #fff">${avg?avg.toFixed(0)+'%':'—'}</td>`;
+    }).join('')}
+    <td></td>
+  </tr></tbody></table>`;
+
+  document.getElementById('chapter-heatmap').innerHTML = tableHTML;
+}
+
+// ===================== RESET PDF DROP ZONES WHEN MODALS CLOSE
+// (section continues below)
+document.addEventListener('DOMContentLoaded', () => {
+  ['assignmentModal','syllabusModal'].forEach(modalId => {
+    document.getElementById(modalId).addEventListener('hidden.bs.modal', () => {
+      ['asgn-drop','syl-drop'].forEach(zoneId => {
+        const z = document.getElementById(zoneId);
+        if (!z) return;
+        z.className = 'pdf-drop-zone';
+        if (zoneId === 'asgn-drop') {
+          z.innerHTML = '<i class="fas fa-cloud-upload-alt mb-2 d-block"></i><div style="font-size:13px;color:#64748b">Click or drag &amp; drop a PDF file here</div><div style="font-size:11px;color:#94a3b8">Max 20 MB</div>';
+          const inp = document.getElementById('asgn-pdf-input');
+          if (inp) inp.value = '';
+          const prev = document.getElementById('asgn-pdf-preview');
+          if (prev) prev.innerHTML = '';
+        } else {
+          z.innerHTML = '<i class="fas fa-file-pdf mb-2 d-block" style="color:#ef4444"></i><div style="font-size:13px;color:#64748b">Click or drag &amp; drop a PDF here</div><div style="font-size:11px;color:#94a3b8">Syllabus, textbook pages, notes — Max 20 MB</div>';
+          const inp = document.getElementById('syl-pdf-input');
+          if (inp) inp.value = '';
+          const prev = document.getElementById('syl-pdf-preview');
+          if (prev) prev.innerHTML = '';
+        }
+      });
+    });
+  });
+});
+
+// ===================== SETTINGS PAGE =====================
+function renderSettingsPage(){
+  const students=getStudents();
+  document.getElementById('student-pins-table').innerHTML=students.map(s=>`
+    <tr><td>${s.name}</td><td>${s.admNo}</td><td><code>${s.admNo.slice(-4)}</code></td></tr>`).join('');
+  // Re-fill Firebase config fields if saved
+  try {
+    const cfg=JSON.parse(localStorage.getItem('xii_fb_config')||'null');
+    if(cfg){
+      const f=document.getElementById('fb-apikey'); if(f) f.value=cfg.apiKey||'';
+      const f2=document.getElementById('fb-authdomain'); if(f2) f2.value=cfg.authDomain||'';
+      const f3=document.getElementById('fb-dburl'); if(f3) f3.value=cfg.databaseURL||'';
+      const f4=document.getElementById('fb-projectid'); if(f4) f4.value=cfg.projectId||'';
+    }
+  } catch(e){}
+  // Update Firebase status UI
+  setFbStatus(window._fbSyncEnabled);
+}
+
+// PAGE TITLES
+const PAGE_TITLES_EXTRA = {
+  attendance:'<i class="fas fa-calendar-check me-2" style="color:var(--accent)"></i>Attendance Register',
+  diary:'<i class="fas fa-journal-whills me-2" style="color:var(--accent)"></i>Teacher Diary',
+  reports:'<i class="fas fa-print me-2" style="color:var(--accent)"></i>Reports & Analysis',
+  settings:'<i class="fas fa-cog me-2" style="color:var(--accent)"></i>Settings'
+};
+Object.assign(PAGE_TITLES, PAGE_TITLES_EXTRA);
+
+// ===================== INIT =====================
+document.addEventListener('DOMContentLoaded', () => {
+  initDate();
+
+  // Populate student login select
+  const sel=document.getElementById('student-login-select');
+  getStudents().forEach(s=>{ const opt=document.createElement('option'); opt.value=s.id; opt.textContent=s.name; sel.appendChild(opt); });
+
+  // Auto-connect Firebase — hardcoded config so ALL devices (teacher + students) sync automatically
+  const DEFAULT_FB_CONFIG = {
+    apiKey: "AIzaSyDxVSZ15RV-ls5DNx5TONWhzsyeaC7dVz0",
+    authDomain: "classxii-tracker.firebaseapp.com",
+    databaseURL: "https://classxii-tracker-default-rtdb.firebaseio.com",
+    projectId: "classxii-tracker"
+  };
+  try {
+    // Use saved config if exists, otherwise use hardcoded default
+    const saved = JSON.parse(localStorage.getItem('xii_fb_config')||'null');
+    if(!saved || !saved.apiKey) {
+      // Save the default config so Settings page shows it filled
+      localStorage.setItem('xii_fb_config', JSON.stringify(DEFAULT_FB_CONFIG));
+    }
+    connectFirebase(true); // silent auto-connect for everyone
+  } catch(e){ console.warn('Firebase auto-connect error:',e); }
+
+  // Check existing session
+  const sess=getSession();
+  if(sess){
+    document.getElementById('login-overlay').style.display='none';
+    if(sess.role==='teacher'){
+      document.getElementById('role-badge').textContent='Teacher';
+      populateSubjectDropdowns(); renderDashboard();
+    } else {
+      document.getElementById('role-badge').textContent=sess.name;
+      showStudentOnlyView(sess.sid);
+    }
+  } else {
+    // Show login
+    document.getElementById('login-overlay').style.display='flex';
+  }
+
+  // Auto-save dot init
+  const dot=document.getElementById('autosave-dot');
+  if(dot){ dot.style.width='8px';dot.style.height='8px';dot.style.borderRadius='50%';dot.style.background='#10b981';dot.style.display='inline-block';dot.style.marginRight='4px'; }
+
+  // Analytics sub-tabs
+  document.querySelector('a[href="#at-chapters"]')?.addEventListener('shown.bs.tab', renderChapterMasteryTab);
+  document.querySelector('a[href="#at-heatmap"]')?.addEventListener('shown.bs.tab', renderHeatmap);
+
+  // Reports sub-tabs
+  document.querySelector('a[href="#rpt-cards"]')?.addEventListener('shown.bs.tab', renderReportCardList);
+
+  // Register service worker (PWA / offline support)
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  }
+});
+</script>
+</body>
+</html>
